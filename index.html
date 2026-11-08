@@ -286,10 +286,81 @@ const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI;
 
 /* ---------- SAVE ---------- */
 const SAVE_KEY = 'arena-herois-v1';
-const ALL = ['warrior', 'mage', 'archer', 'ninja', 'paladin', 'druid', 'bomber', 'pyro', 'cryo', 'electro', 'necro', 'illusion', 'shadow', 'arcane', 'wind', 'geo', 'chrono', 'spear', 'berserk', 'duelist', 'crossbow', 'sniper', 'gunslinger', 'legion', 'chain', 'knives', 'samurai', 'wolf', 'bear', 'snake', 'spider', 'treant', 'hawk', 'beekeeper', 'shaman', 'boar', 'nymph', 'reaper', 'vampire', 'cleric', 'angel', 'demon', 'witch', 'monk', 'templar', 'ghost', 'darkknight'];
-const SKINS = [{ id: 'gold', n: 'Dourado', price: 300, col: '#f2c14e' }, { id: 'ice', n: 'Gélido', price: 300, col: '#7fe0ff' }, { id: 'shadow', n: 'Sombra', price: 400, col: '#6a4aa0' }, { id: 'fire', n: 'Brasa', price: 400, col: '#ff6a2a' },
-  { id: 'jade', n: 'Jade', price: 500, col: '#2fd08a' }, { id: 'ruby', n: 'Rubi', price: 500, col: '#e0305a' }, { id: 'rainbow', n: 'Arco-íris ✨', price: 1200, col: null }];
-const SKIN_IDS = SKINS.map(x => x.id), skinCol = (id, t) => { const k = SKINS.find(x => x.id === id); return !k ? null : k.col || `hsl(${(t * 70) % 360},85%,60%)`; };
+/*GEN-DATA*/
+// ---- Heróis gerados (mecânicas combinadas) · cat armas
+const GEN = [
+  { id: 'gladiator', cat: 'armas', name: 'Gladiador', color: '#b8863b', hp: 175, speed: 175, r: 20, look: ['sword', 'crest', '#e8c26a'], a: { t: 'melee', cd: .55, dmg: 17, range: 80, arc: 1.3, kb: 280 }, s: { t: 'dash', name: 'Investida atordoante', cd: 7, dmg: 20, time: .26, speed: 680, fx: 'stun' }, d: ['Espada larga em arco amplo.', 'Investida atordoante: corre e atordoa quem apanhar.'] },
+  { id: 'axeman', cat: 'armas', name: 'Machadeiro', color: '#8a3a2a', hp: 180, speed: 165, r: 21, look: ['axe', 'horns', '#d8a070'], a: { t: 'melee', cd: .95, dmg: 27, range: 78, arc: 1.6, kb: 340 }, s: { t: 'nova', name: 'Giro de machado', cd: 6, dmg: 21.6, rad: 105, kb: 330 }, d: ['Golpes lentos e pesadíssimos.', 'Giro de machado: onda à volta que empurra todos.'] },
+  { id: 'musketeer', cat: 'armas', name: 'Mosqueteiro', color: '#3b5ca8', hp: 100, speed: 175, r: 16, look: ['gun', 'hat', '#e8d28a'], a: { t: 'proj', cd: 1.1, dmg: 27, speed: 900, r: 5, ps: 'dia' }, s: { t: 'back', name: 'Recuo tático', cd: 5, speed: 600, time: .22, inv: .2 }, d: ['Tiro único, rápido e forte.', 'Recuo tático: salta para trás, invulnerável por instantes.'] },
+  { id: 'hunter', cat: 'armas', name: 'Caçador', color: '#4f7a3a', hp: 94, speed: 190, r: 16, look: ['bow', 'hood', '#c8e08a'], a: { t: 'proj', cd: .55, dmg: 9.9, speed: 720, r: 4, slow: 1, ps: 'dia' }, s: { t: 'bolt', name: 'Armadilha de rede', cd: 8, dmg: 12.6, speed: 640, r: 9, root: 1.3, ps: 'orb' }, d: ['Flechas que abrandam a presa.', 'Armadilha de rede: prende o inimigo no sítio.'] },
+  { id: 'pirate', cat: 'armas', name: 'Pirata', color: '#7a2a3a', hp: 130, speed: 185, r: 17, look: ['gun', 'bandana', '#e8e8e8'], a: { t: 'spread', n: 3, sp: .22, cd: .9, dmg: 8, speed: 650, r: 4, life: .75, ps: 'orb' }, s: { t: 'dash', name: 'Abordagem', cd: 6, dmg: 22, time: .25, speed: 700 }, d: ['Bacamarte: três balas em leque, curto alcance.', 'Abordagem: salta sobre o inimigo.'] },
+  { id: 'knight', cat: 'armas', name: 'Cavaleiro', color: '#a9b0c0', hp: 215, speed: 150, r: 22, look: ['sword', 'helmet', '#7a8296'], a: { t: 'melee', cd: .8, dmg: 24, range: 80, arc: 1.1, kb: 300 }, s: { t: 'shield', name: 'Guarda de ferro', cd: 8, dur: 2.2 }, d: ['Espada e armadura pesada.', 'Guarda de ferro: ergue o escudo e bloqueia dano.'] },
+  { id: 'merc', cat: 'armas', name: 'Mercenário', color: '#6b5a3a', hp: 172, speed: 190, r: 18, look: ['sword', 'bandana', '#d84a3a'], a: { t: 'melee', cd: .4, dmg: 14.3, range: 74, arc: 1.1, kb: 200 }, s: { t: 'buff', name: 'Pagamento a dobrar', cd: 10, buff: 'fury', dur: 4 }, d: ['Golpes rápidos e seguros.', 'Pagamento a dobrar: fúria, mais dano durante 4 s.'] },
+  { id: 'axethrower', cat: 'armas', name: 'Atirador de Machados', color: '#a0522d', hp: 104, speed: 170, r: 17, look: ['axe', 'helmet', '#e0c090'], a: { t: 'proj', cd: 1, dmg: 19.8, speed: 520, r: 9, life: 1.3, pierce: 1, ps: 'rect' }, s: { t: 'volley', name: 'Chuva de machados', cd: 7, dmg: 14.4, n: 3, sp: .22, speed: 560, r: 8, pierce: 1, ps: 'rect' }, d: ['Machados que atravessam o alvo.', 'Chuva de machados: leque de três machados.'] },
+  { id: 'brawler', cat: 'armas', name: 'Pugilista', color: '#d9772b', hp: 216, speed: 205, r: 17, look: ['fists', 'headband', '#ffe08a'], a: { t: 'melee', cd: .28, dmg: 14.6, range: 58, arc: 1.5, kb: 120 }, s: { t: 'dash', name: 'Gancho de direita', cd: 6, dmg: 18, time: .2, speed: 760, fx: 'stun' }, d: ['Socos muito rápidos de curto alcance.', 'Gancho de direita: avanço que atordoa.'] },
+  { id: 'weaponmaster', cat: 'armas', name: 'Mestre de Armas', color: '#7f7fa8', hp: 168, speed: 185, r: 18, look: ['sword', 'headband', '#c8c8ff'], a: { t: 'melee', cd: .45, dmg: 16.8, range: 78, arc: 1.2, kb: 220 }, s: { t: 'buff', name: 'Postura veloz', cd: 9, buff: 'speed', dur: 3.5 }, d: ['Domina qualquer lâmina: golpes rápidos.', 'Postura veloz: move-se muito mais depressa.'] },
+  { id: 'horseman', cat: 'armas', name: 'Cavaleiro Montado', color: '#8a6a3a', hp: 148, speed: 215, r: 21, look: ['spear', 'helmet', '#e8e0c0'], a: { t: 'melee', cd: .7, dmg: 18, range: 100, arc: .7, kb: 280 }, ideal: 85, s: { t: 'dash', name: 'Carga', cd: 6.5, dmg: 30.6, time: .35, speed: 780 }, d: ['Lança longa, estocadas de longe.', 'Carga: galope devastador contra o inimigo.'] },
+  { id: 'netter', cat: 'armas', name: 'Retiário', color: '#2e8b9a', hp: 144, speed: 180, r: 17, look: ['trident', 'mask', '#bfe8f0'], a: { t: 'melee', cd: .6, dmg: 16.1, range: 120, arc: .6, kb: 200 }, ideal: 100, s: { t: 'bolt', name: 'Rede', cd: 8, dmg: 12, speed: 600, r: 11, root: 1.5, ps: 'orb' }, d: ['Tridente de longo alcance.', 'Rede: lança uma rede que imobiliza.'] },
+  { id: 'arquebusier', cat: 'armas', name: 'Arcabuzeiro', color: '#5a4a3a', hp: 95, speed: 165, r: 16, look: ['cannon', 'helmet', '#d0b080'], a: { t: 'proj', cd: 1.6, dmg: 38, speed: 1000, r: 6, ps: 'dia' }, s: { t: 'nova', name: 'Explosão de pólvora', cd: 6, dmg: 20, rad: 95, kb: 460 }, d: ['Tiro lentíssimo mas devastador.', 'Explosão de pólvora: atira longe quem estiver perto.'] },
+  { id: 'slinger', cat: 'armas', name: 'Fundibulário', color: '#9a8a5a', hp: 109, speed: 195, r: 15, look: ['sling', 'headband', '#6a5a30'], a: { t: 'proj', cd: .45, dmg: 9.6, speed: 640, r: 4, ps: 'orb' }, s: { t: 'ring', name: 'Pedras em círculo', cd: 8, dmg: 7, n: 10, speed: 460, r: 5, life: .9, ps: 'orb' }, d: ['Pedras rápidas com a funda.', 'Pedras em círculo: dispara em todas as direções.'] },
+  { id: 'fencer', cat: 'armas', name: 'Esgrimista', color: '#c04a6a', hp: 195, speed: 215, r: 15, look: ['rapier', 'hat', '#ffd0dc'], a: { t: 'melee', cd: .26, dmg: 16.2, range: 78, arc: .95, kb: 90 }, ideal: 70, s: { t: 'back', name: 'Esquiva elegante', cd: 5, speed: 620, time: .2, inv: .45 }, d: ['Estocadas rapidíssimas e precisas.', 'Esquiva elegante: salta para trás sem ser atingido.'] },
+  { id: 'staffmaster', cat: 'armas', name: 'Mestre do Bastão', color: '#6a8a5a', hp: 182, speed: 180, r: 18, look: ['staff', 'headband', '#e8e0a0'], a: { t: 'melee', cd: .5, dmg: 14.5, range: 90, arc: 1, kb: 350 }, s: { t: 'nova', name: 'Varrimento', cd: 6, dmg: 14, rad: 120, kb: 540 }, d: ['Bastão que empurra o adversário.', 'Varrimento: onda que afasta todos para longe.'] },
+  { id: 'thief', cat: 'armas', name: 'Ladrão', color: '#4a4a6a', hp: 191, speed: 215, r: 15, look: ['dagger', 'hood', '#9a9ac0'], a: { t: 'melee', cd: .3, dmg: 18.1, range: 60, arc: 1.5, kb: 100 }, s: { t: 'buff', name: 'Capa de sombras', cd: 9, buff: 'ghost', dur: 3 }, d: ['Facadas rápidas de muito perto.', 'Capa de sombras: fica quase invisível durante 3 s.'] },
+  { id: 'assassin', cat: 'armas', name: 'Assassino', color: '#2a2a3a', hp: 150, speed: 230, r: 15, look: ['dagger', 'mask', '#ff5a5a'], a: { t: 'melee', cd: .4, dmg: 18.7, range: 62, arc: 1.4, kb: 130 }, s: { t: 'dash', name: 'Golpe fatal', cd: 7, dmg: 40, time: .2, speed: 900, inv: .2 }, d: ['Lâminas gémeas, golpes certeiros.', 'Golpe fatal: avanço invisível com dano enorme.'] },
+  { id: 'engineer', cat: 'armas', name: 'Engenheiro', color: '#c0a030', hp: 120, speed: 170, r: 17, look: ['gun', 'helmet', '#ffd84a'], a: { t: 'proj', cd: .6, dmg: 11, speed: 560, r: 5, ps: 'orb' }, s: { t: 'lob', name: 'Granada', cd: 6.5, dmg: 36 }, d: ['Pistola de faíscas.', 'Granada: bomba com rastilho que explode em área.'] },
+  { id: 'sentinel', cat: 'armas', name: 'Sentinela', color: '#5a7a9a', hp: 170, speed: 150, r: 21, look: ['shield', 'helmet', '#c0d8f0'], a: { t: 'proj', cd: .85, dmg: 15.3, speed: 600, r: 7, ps: 'dia' }, s: { t: 'shield', name: 'Muralha viva', cd: 8, dur: 2.5 }, d: ['Dispara de trás do escudo.', 'Muralha viva: escudo que bloqueia dano.'] },
+];
+const GEN_IDS = GEN.map(g => g.id);
+const ALL = ['warrior', 'mage', 'archer', 'ninja', 'paladin', 'druid', 'bomber', 'pyro', 'cryo', 'electro', 'necro', 'illusion', 'shadow', 'arcane', 'wind', 'geo', 'chrono', 'spear', 'berserk', 'duelist', 'crossbow', 'sniper', 'gunslinger', 'legion', 'chain', 'knives', 'samurai', 'wolf', 'bear', 'snake', 'spider', 'treant', 'hawk', 'beekeeper', 'shaman', 'boar', 'nymph', 'reaper', 'vampire', 'cleric', 'angel', 'demon', 'witch', 'monk', 'templar', 'ghost', 'darkknight', ...GEN_IDS];
+// skins: cat cor/pad/fx/leg · pat = padrão no corpo (c2/c3 cores extra) · fx = [[efeito, cor]...] (desenhados, funcionam também na loja)
+const mkS = (cat, list) => list.map(([id, n, price, col, o]) => ({ id, n, price, cat, col, ...(o || {}) }));
+const SKINS = [
+  ...mkS('cor', [['gold', 'Dourado', 300, '#f2c14e'], ['ice', 'Gélido', 300, '#7fe0ff'], ['shadow', 'Sombra', 400, '#6a4aa0'], ['fire', 'Brasa', 400, '#ff6a2a'], ['jade', 'Jade', 500, '#2fd08a'], ['ruby', 'Rubi', 500, '#e0305a'],
+    ['pearl', 'Pérola', 250, '#f1ede4'], ['onyx', 'Ónix', 250, '#34343e'], ['ocean', 'Oceano', 250, '#2a74e8'], ['forest', 'Floresta', 250, '#2e9460'], ['citrus', 'Cítrico', 250, '#ff9a1f'], ['bubble', 'Chiclete', 300, '#ff62b4'],
+    ['violet', 'Violeta', 300, '#9b59f0'], ['teal', 'Turquesa', 300, '#1fd1c4'], ['lime', 'Lima', 300, '#b8e62e'], ['bronze', 'Bronze', 300, '#b87a3e'], ['silver', 'Prata', 350, '#c9d1de'], ['crimson', 'Carmesim', 350, '#b3122e']]),
+  ...mkS('pad', [['sunset', 'Pôr-do-sol', 450, '#ff7a45', { pat: 'grad', c2: '#c13cff' }], ['deep', 'Mar profundo', 450, '#1e90ff', { pat: 'grad', c2: '#0a1f6b' }], ['aurora', 'Aurora', 500, '#2fe6a6', { pat: 'grad', c2: '#7a5cff' }],
+    ['candy', 'Algodão-doce', 500, '#ff9ad5', { pat: 'grad', c2: '#8ad8ff' }], ['magma', 'Magma', 500, '#ffd23c', { pat: 'grad', c2: '#d3200f' }], ['tiger', 'Tigre', 550, '#ff8a1f', { pat: 'stripes', c2: '#1a1a1a', bars: 3 }],
+    ['zebra', 'Zebra', 550, '#f4f4f4', { pat: 'stripes', c2: '#1a1a1a', bars: 5 }], ['bee', 'Abelha', 550, '#ffd21f', { pat: 'stripes', c2: '#222', bars: 3 }], ['ladybug', 'Joaninha', 550, '#e02020', { pat: 'dots', c2: '#111' }],
+    ['leopard', 'Leopardo', 600, '#e8b04a', { pat: 'spots', c2: '#6a3b12' }], ['camo', 'Camuflado', 600, '#5b7a3a', { pat: 'camo', c2: '#3a4f24', c3: '#8a9a5a' }], ['checker', 'Xadrez', 600, '#f0f0f0', { pat: 'checker', c2: '#222' }],
+    ['target', 'Alvo', 650, '#e53935', { pat: 'rings', c2: '#fff' }], ['duo', 'Dois mundos', 650, '#2a74e8', { pat: 'half', c2: '#ff9a1f' }], ['yin', 'Equilíbrio', 650, '#f4f4f4', { pat: 'half', c2: '#222' }]]),
+  ...mkS('fx', [['ember', 'Brasas', 800, '#ff6a2a', { fx: [['rise', '#ffb347']] }], ['frost', 'Nevão', 800, '#bfeaff', { fx: [['fall', '#ffffff']] }], ['static', 'Faísca', 900, '#ffe14a', { fx: [['zap', '#fff6a0']] }],
+    ['toxic', 'Tóxico', 900, '#6bd62e', { fx: [['rise', '#c8ff7a']] }], ['blood', 'Sangrento', 900, '#a30f1f', { fx: [['rise', '#ff4a4a']] }], ['neon', 'Néon', 1000, '#101018', { fx: [['aura', '#39ff88']] }],
+    ['arcane', 'Orbes arcanos', 1000, '#5a7bff', { fx: [['orbit', '#b8c8ff']] }], ['angel', 'Anjo', 1100, '#fff6dc', { fx: [['halo', '#ffd24a']] }], ['sakura', 'Sakura', 1100, '#ffb7d0', { fx: [['fall', '#ff8fb5']] }],
+    ['void', 'Vazio', 1200, '#0d0618', { fx: [['aura', '#9a4cff'], ['twinkle', '#c8a0ff']] }], ['cosmic', 'Cósmico', 1200, '#141a4a', { fx: [['twinkle', '#ffffff']] }], ['rainbow', 'Arco-íris', 1200, null, { rainbow: 1, fx: [['aura', '#ffffff']] }],
+    ['storm', 'Tempestade', 1300, '#6b7488', { fx: [['zap', '#bfe0ff']] }], ['spirit', 'Espírito', 1300, '#9fe8ff', { fx: [['rise', '#e8ffff'], ['aura', '#9fe8ff']] }], ['diamond', 'Diamante', 1400, '#aef0ff', { fx: [['twinkle', '#ffffff']] }],
+    ['volcano', 'Vulcão', 1500, '#3a1410', { fx: [['rise', '#ff5a1a'], ['aura', '#ff3a00']] }]]),
+  ...mkS('leg', [['royal', 'Ouro real', 2500, '#f2c14e', { fx: [['twinkle', '#fff6c8'], ['orbit', '#ffe08a']] }], ['dragon', 'Dragão', 2500, '#c0231a', { pat: 'stripes', c2: '#7a0f0a', bars: 3, fx: [['rise', '#ffb02e'], ['aura', '#ff7a1a']] }],
+    ['celestial', 'Celestial', 3000, '#fff6dc', { pat: 'grad', c2: '#9ad8ff', fx: [['halo', '#ffd24a'], ['twinkle', '#ffffff']] }], ['omega', 'Ómega', 3000, null, { rainbow: 1, fx: [['orbit', '#ffffff'], ['aura', '#ffffff']] }]])];
+const SKIN_BY = Object.fromEntries(SKINS.map(k => [k.id, k])), SKIN_IDS = SKINS.map(x => x.id), skinCol = (id, t) => { const k = SKIN_BY[id]; return !k ? null : k.rainbow ? `hsl(${(t * 70) % 360},85%,60%)` : k.col; };
+const _pr = n => Math.abs(Math.sin(n * 127.1) * 43758.5453) % 1;
+function fxDraw(c, type, fc, r, t) {
+  c.save(); c.fillStyle = fc; c.strokeStyle = fc;
+  if (type === 'rise' || type === 'fall') for (let i = 0; i < 9; i++) { const ph = (t * .7 + i / 9) % 1, x = Math.sin(i * 12.9 + 1.3) * r * .9 + (type === 'fall' ? Math.sin(t * 2 + i) * 4 : 0), y = type === 'rise' ? r * .4 - ph * r * 2.7 : -r * 1.6 + ph * r * 2.9;
+    c.globalAlpha = (type === 'rise' ? 1 - ph : Math.min(1, ph * 4, (1 - ph) * 4)) * .9; c.beginPath(); c.arc(x, y, type === 'rise' ? (1 - ph) * 3.4 + .8 : 2.6, 0, 7); c.fill(); }
+  else if (type === 'twinkle') for (let i = 0; i < 8; i++) { const a = i * 2.4 + t * .15, d = r * (1.05 + .55 * _pr(i + 3)), x = Math.cos(a) * d, y = Math.sin(a) * d, al = Math.max(0, Math.sin(t * 3.3 + i * 1.9)), z = 1.5 + 4.5 * al;
+    c.globalAlpha = al; c.lineWidth = 1.6; c.beginPath(); c.moveTo(x - z, y); c.lineTo(x + z, y); c.moveTo(x, y - z); c.lineTo(x, y + z); c.stroke(); }
+  else if (type === 'orbit') for (let i = 0; i < 3; i++) { const a = t * 2.4 + i * 2.094; c.globalAlpha = .95; c.beginPath(); c.arc(Math.cos(a) * (r + 11), Math.sin(a) * (r + 11) * .85, 3.6, 0, 7); c.fill(); }
+  else if (type === 'aura') { c.lineWidth = 3; c.globalAlpha = .5 + .25 * Math.sin(t * 4); c.beginPath(); c.arc(0, 0, r + 7 + 2 * Math.sin(t * 3), 0, 7); c.stroke(); c.globalAlpha = .22; c.lineWidth = 2; c.beginPath(); c.arc(0, 0, r + 13 + 2 * Math.sin(t * 3 + 1), 0, 7); c.stroke(); }
+  else if (type === 'halo') { c.translate(0, -r - 12 + Math.sin(t * 3) * 1.5); c.lineWidth = 3.5; c.globalAlpha = .95; c.beginPath(); c.ellipse(0, 0, r * .75, r * .24, 0, 0, 7); c.stroke(); }
+  else if (type === 'zap') { const fl = Math.floor(t * 14); c.lineWidth = 1.8; c.globalAlpha = .9; for (let i = 0; i < 3; i++) { const sd = fl * 3 + i, a = _pr(sd) * 6.283; c.beginPath(); let px = Math.cos(a) * r * .9, py = Math.sin(a) * r * .9; c.moveTo(px, py);
+    for (let k = 1; k <= 3; k++) { const rr = r * .9 + k * 4.5, aa = a + (_pr(sd + k * 7) - .5) * .7; px = Math.cos(aa) * rr; py = Math.sin(aa) * rr; c.lineTo(px, py); } c.stroke(); } }
+  c.restore();
+}
+function skinDeco(c, f, r, t) {
+  const k = SKIN_BY[f.skin]; if (!k) return;
+  if (k.pat) {
+    c.save(); c.beginPath(); c.arc(0, 0, r - 1.5, 0, 7); c.clip(); const p = k.pat; c.fillStyle = k.c2;
+    if (p === 'grad') { const g = c.createLinearGradient(-r, -r, r, r); g.addColorStop(0, k.col); g.addColorStop(1, k.c2); c.fillStyle = g; c.fillRect(-r, -r, 2 * r, 2 * r); }
+    else if (p === 'stripes') { const n = k.bars || 3, w = n > 3 ? r * .2 : r * .3; for (let i = 0; i < n; i++) c.fillRect((i - (n - 1) / 2) * (2 * r / (n + 0.6)) - w / 2, -r, w, 2 * r); }
+    else if (p === 'dots' || p === 'spots') { const big = p === 'spots' ? .2 : .16; for (const [x, y] of [[-.5, -.4], [.2, -.6], [.55, .1], [-.2, .35], [.35, .55], [-.65, .15]]) { c.beginPath(); c.arc(x * r, y * r, big * r, 0, 7); c.fill(); } }
+    else if (p === 'camo') { for (const [x, y, q] of [[-.5, -.3, 0], [.3, -.5, 1], [.5, .3, 0], [-.3, .5, 1], [0, 0, 1], [.65, -.1, 0]]) { c.fillStyle = q ? k.c3 : k.c2; c.beginPath(); c.ellipse(x * r, y * r, r * .34, r * .24, x + y, 0, 7); c.fill(); } }
+    else if (p === 'checker') { const g = 2 * r / 3; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) if ((i + j) % 2) c.fillRect(-r + i * g, -r + j * g, g, g); }
+    else if (p === 'rings') { c.strokeStyle = k.c2; c.lineWidth = r * .16; c.beginPath(); c.arc(0, 0, r * .8, 0, 7); c.stroke(); c.beginPath(); c.arc(0, 0, r * .42, 0, 7); c.stroke(); c.beginPath(); c.arc(0, 0, r * .12, 0, 7); c.fill(); }
+    else if (p === 'half') c.fillRect(0, -r, r, 2 * r);
+    c.restore();
+  }
+  if (k.fx) { c.save(); c.rotate(-f.aim); for (const [ty, fc] of k.fx) fxDraw(c, ty, fc, r, t); c.restore(); }
+}
 const skinOf = k => save.skins[k] || (save.skins[k] = { own: [], sel: '' }), skinCount = () => Object.values(save.skins).reduce((a, z) => a + z.own.length, 0);
 const save = { levels: Object.fromEntries(ALL.map(k => [k, 1])), selected: 'warrior', arena: 'random', mode: 1, p2: 'random', coins: 0,
   potions: { fury: 0, speed: 0, regen: 0, reflex: 0, ward: 0, vamp: 0, ghost: 0, giant: 0 }, armor: Object.fromEntries(ALL.map(k => [k, 0])), weapon: Object.fromEntries(ALL.map(k => [k, 0])), boost: { gold: 0, sage: 0 }, tower: { best: 0, runs: 0 }, skins: {}, offers: null, quests: null, stars: Object.fromEntries(ALL.map(k => [k, 0])), ach: {}, stats: { games: 0, wins: 0, losses: 0, time: 0, streak: 0, best: 0, dmg: 0, coins: 0, quests: 0, heroes: {}, f: {} }, pts: Object.fromEntries(ALL.map(k => [k, 0])), unlocked: null,
@@ -574,6 +645,7 @@ const CLASSES = {
 const MELEE = new Set(['warrior', 'paladin', 'berserk', 'duelist', 'legion', 'samurai', 'wolf', 'bear', 'treant', 'boar', 'reaper', 'vampire', 'monk', 'templar', 'darkknight']);
 const CATS = [['all', 'Todos'], ['magia', '✨ Magia'], ['armas', '⚔ Armas'], ['natureza', '🌿 Natureza e bestas'], ['divino', '☀ Sombras e divino']];
 const NEWCLS = new Set(['pyro', 'cryo', 'electro', 'necro', 'illusion', 'shadow', 'arcane', 'wind', 'geo', 'chrono', 'spear', 'berserk', 'duelist', 'crossbow', 'sniper', 'gunslinger', 'legion', 'chain', 'knives', 'samurai', 'wolf', 'bear', 'snake', 'spider', 'treant', 'hawk', 'beekeeper', 'shaman', 'boar', 'nymph', 'reaper', 'vampire', 'cleric', 'angel', 'demon', 'witch', 'monk', 'templar', 'ghost', 'darkknight']);
+for (const g of GEN) CLASSES[g.id] = { cat: g.cat, name: g.name, color: g.color, hp: g.hp, speed: g.speed, r: g.r, basic: { cd: g.a.cd, dmg: g.a.dmg, range: g.a.range || 0, arc: g.a.arc, speed: g.a.speed || 0 }, special: { cd: g.s.cd, dmg: g.s.dmg || 0, name: g.s.name }, desc: g.d.join(' '), g };
 const CKEYS = Object.keys(CLASSES);
 // ajuste fino de equilíbrio [vida, dano] (resultado de simulações bot vs bot)
 const BAL = { spear: [1.12, 1.12], chain: [1.1, 1.1], sniper: [1.1, 1.1], geo: [1.06, 1.06], duelist: [1.06, 1.06], treant: [1.06, 1.06], wolf: [1.05, 1.05], ghost: [.92, .92], archer: [.92, .92], cleric: [1.04, 1.04], gunslinger: [.92, .92], wind: [1.08, 1.08], witch: [1.08, 1.08], vampire: [1.06, 1.06], necro: [1.05, 1.05], legion: [.95, .95], templar: [1.02, 1.02], crossbow: [.93, .93], reaper: [1.06, 1.06], berserk: [.96, .96], chrono: [.96, .96], angel: [.94, .94], cryo: [.94, .94] };
@@ -581,6 +653,7 @@ const UNLOCK_OLD = { ninja: 6, paladin: 10, druid: 15, bomber: 21, pyro: 25, cry
 // ordem de desbloqueio: dos mais simples/básicos aos mais complexos e fortes (começas só com Guerreiro, Mago e Arqueiro)
 const UNLOCK_ORDER = ['spear', 'berserk', 'knives', 'ninja', 'sniper', 'vampire', 'samurai', 'boar', 'chain', 'paladin', 'snake', 'monk', 'duelist', 'pyro', 'templar', 'reaper', 'hawk', 'wind', 'treant', 'bear', 'nymph', 'crossbow', 'druid', 'wolf', 'darkknight', 'gunslinger', 'electro', 'legion', 'bomber', 'geo', 'demon', 'witch', 'cryo', 'spider', 'necro', 'cleric', 'beekeeper', 'shaman', 'angel', 'shadow', 'arcane', 'ghost', 'illusion', 'chrono'];
 const UNLOCK_SCHED = [9, 15, 23, 32, 38, 45, 53, 60, 68, 75, 83, 90, 98, 105, 112, 118, 124, 130, 136, 142, 148, 154, 160, 166, 171, 176, 181, 186, 191, 196, 201, 206, 211, 216, 221, 226, 231, 236, 241, 246, 251, 256, 261, 266];
+GEN.forEach((g, i) => { UNLOCK_ORDER.push(g.id); UNLOCK_SCHED.push(270 + 7 * i); });
 const UNLOCK = Object.fromEntries(UNLOCK_ORDER.map((k, i) => [k, UNLOCK_SCHED[i]]));
 const progress = () => 3 + CKEYS.reduce((t, k) => t + save.levels[k] - 1 + 9 * (save.stars[k] | 0), 0);
 if (!Array.isArray(save.unlocked)) save.unlocked = Object.keys(UNLOCK_OLD).filter(k => progress() >= UNLOCK_OLD[k]); // quem já tinha desbloqueado mantém
@@ -619,6 +692,92 @@ const RARES = { gold: { name: 'Poção Dourada', icon: '🏺', price: 180, desc:
 const armorLabel = k => save.armor[k] > 0 ? `${ARMORS[save.armor[k] - 1].name} (−${Math.round(ARMORS[save.armor[k] - 1].red * 100)}%)` : 'Nenhuma';
 const IDEAL = { warrior: 60, mage: 250, archer: 310, ninja: 240, paladin: 55, druid: 270, bomber: 210, pyro: 240, cryo: 215, electro: 230, necro: 280, illusion: 270, shadow: 200, arcane: 270, wind: 250, geo: 230, chrono: 270 , spear: 105, berserk: 55, duelist: 58, crossbow: 300, sniper: 400, gunslinger: 230, legion: 55, chain: 140, knives: 260, samurai: 62, wolf: 55, bear: 55, snake: 220, spider: 230, treant: 60, hawk: 260, beekeeper: 250, shaman: 270, boar: 55, nymph: 250, reaper: 65, vampire: 58, cleric: 240, angel: 320, demon: 240, witch: 280, monk: 52, templar: 58, ghost: 250, darkknight: 60};
 const PSPEED = { warrior: 0, mage: 360, archer: 700, ninja: 620, paladin: 0, druid: 480, bomber: 340, pyro: 430, cryo: 520, electro: 0, necro: 420, illusion: 560, shadow: 0, arcane: 520, wind: 420, geo: 280, chrono: 500 , spear: 0, berserk: 0, duelist: 0, crossbow: 800, sniper: 0, gunslinger: 820, legion: 0, chain: 0, knives: 760, samurai: 0, wolf: 0, bear: 0, snake: 560, spider: 480, treant: 0, hawk: 520, beekeeper: 400, shaman: 420, boar: 0, nymph: 460, reaper: 0, vampire: 0, cleric: 480, angel: 0, demon: 440, witch: 400, monk: 0, templar: 0, ghost: 380, darkknight: 0};
+for (const g of GEN) { const t = g.a.t; if (t === 'melee' || t === 'nova') MELEE.add(g.id); IDEAL[g.id] = g.ideal || ({ melee: 58, nova: 55, proj: 250, spread: 200, ring: 230, beam: 300, lob: 220 })[t] || 250; PSPEED[g.id] = g.a.speed || 0; NEWCLS.add(g.id); }
+
+/* ---------- HERÓIS GERADOS: ataques, especiais, IA e desenho ---------- */
+function genAttack(f) {
+  const c = f.c, g = c.g.a, a = f.aim, dm = c.basic.dmg, rg = (c.basic.range || 0) * (f.rngMul || 1), ty = 'p_' + f.cls;
+  const po = { speed: g.speed, r: g.r || 6, dmg: dm, type: ty, slow: g.slow, burn: g.burn, pois: g.pois, steal: g.steal, home: g.home, kb: g.kb, life: g.life, stun: g.stun, root: g.root, pierce: g.pierce };
+  if (g.t === 'melee') meleeArc(f, g.kb || 260);
+  else if (g.t === 'proj') { spawnProj(f, a, po); SFX.arrow(); }
+  else if (g.t === 'spread') { const n = g.n || 3; for (let i = 0; i < n; i++) spawnProj(f, a + (i - (n - 1) / 2) * (g.sp || .15), po); SFX.arrow(); }
+  else if (g.t === 'ring') { const n = g.n || 8; for (let i = 0; i < n; i++) spawnProj(f, a + i * Math.PI * 2 / n, po); SFX.arrow(); }
+  else if (g.t === 'nova') { SFX.swing(); G.fx.push({ t: 'ring', x: f.x, y: f.y, life: .25, max: .25, range: rg, col: g.col || c.color }); G.shake = Math.max(G.shake, 3); for (const o of foes(f)) if (Math.hypot(o.x - f.x, o.y - f.y) < rg + o.r) hurt(o, dm * f.dmgMul, f.x, f.y, g.kb || 300); meleeSummons(f, rg, 0, null, dm * f.dmgMul); }
+  else if (g.t === 'beam') beam(f, g.range || 340, dm, g.o || {});
+  else if (g.t === 'lob') { lob(f, 'mine', dm); SFX.fire(); }
+}
+function genSpecial(f, dirA) {
+  const c = f.c, g = c.g.s, dm = c.special.dmg || 0, ty = 'p_' + f.cls + '_s';
+  const po = { speed: g.speed || 560, r: g.r || 6, dmg: dm, type: ty, slow: g.slow, burn: g.burn, pois: g.pois, steal: g.steal, kb: g.kb, life: g.life, stun: g.stun, root: g.root, pierce: g.pierce };
+  switch (g.t) {
+    case 'dash': f.dashT = g.time || .25; f.dashA = f.aim; f.dashHit = false; f.dashSpd = g.speed || 700; f.dashDmg = dm; f.dashFx = g.fx || null; if (g.inv) f.inv = g.inv; if (g.shield) f.shield = g.shield; SFX.dash(); break;
+    case 'back': { const e = opp(f), away = e ? Math.atan2(f.y - e.y, f.x - e.x) : f.aim + Math.PI; f.dashT = g.time || .25; f.dashA = away; f.dashSpd = g.speed || 560; f.dashDmg = 0; f.dashHit = true; f.inv = g.inv || .12; burst(f.x, f.y, c.color, 12, 180, 3); SFX.tp(); } break;
+    case 'blink': burst(f.x, f.y, c.color, 16, 220, 4); f.x = clamp(f.x + Math.cos(dirA) * (g.dist || 170), AR.x + f.r, AR.x + AR.w - f.r); f.y = clamp(f.y + Math.sin(dirA) * (g.dist || 170), AR.y + f.r, AR.y + AR.h - f.r); if (g.rad) nova(f, { rad: g.rad, dmg: dm, col: c.color }); SFX.tp(); break;
+    case 'behind': blinkBehind(f); break;
+    case 'buff': f.buf[g.buff] = g.dur || 4; if (g.buff === 'ward') f.absorb = 40; burst(f.x, f.y, c.color, 16, 200, 3); tone(520, .12, 'triangle', .14, 400); tone(780, .18, 'triangle', .12, 300, .1); break;
+    case 'shield': f.shield = g.dur || 2; burst(f.x, f.y, '#cfe6ff', 14, 180, 3); SFX.tp(); break;
+    case 'heal': f.healT = g.dur || 3; tone(660, .3, 'sine', .12, 300); break;
+    case 'inv': f.inv = g.dur || 1; if (g.buff) f.buf[g.buff] = g.bdur || g.dur; burst(f.x, f.y, c.color, 14, 200, 3); SFX.tp(); break;
+    case 'nova': nova(f, { rad: g.rad || 110, dmg: dm, col: g.col || c.color, burn: g.burn, root: g.root, stun: g.stun, slow: g.slow, kb: g.kb, heal: g.heal, healSelf: g.healSelf }); SFX.fire(); break;
+    case 'bolt': spawnProj(f, f.aim, po); SFX.fire(); break;
+    case 'volley': { const n = g.n || 5; for (let i = 0; i < n; i++) spawnProj(f, f.aim + (i - (n - 1) / 2) * (g.sp || .15), po); SFX.arrow(); } break;
+    case 'ring': { const n = g.n || 10; for (let i = 0; i < n; i++) spawnProj(f, f.aim + i * Math.PI * 2 / n, po); SFX.arrow(); } break;
+    case 'beam': beam(f, g.range || 420, dm, g.o || {}); break;
+    case 'lob': lob(f, 'bomb', dm); SFX.dash(); break;
+    case 'summon': summon(f, g.kind || 'skel'); break;
+    case 'pillar': stonePillar(f); break;
+    case 'tornado': tornado(f); break;
+    case 'rewind': rewind(f); break;
+  }
+}
+function aiSpecialGen(b, d, base, aim, t2) {
+  const g = b.c.g.s;
+  switch (g.t) {
+    case 'dash': if (d > 100 && d < (g.rng || 330)) { b.aim = base; doSpecial(b, base); } break;
+    case 'back': if (d < 140 || (t2 && d < 260)) doSpecial(b, base); break;
+    case 'blink': if (d < 140) doSpecial(b, base + Math.PI + rnd(-.6, .6)); break;
+    case 'behind': if (d > 110 && d < 380) doSpecial(b, base); break;
+    case 'buff': if (d < 380) doSpecial(b, base); break;
+    case 'shield': if (t2 || (d < 130 && b.shield <= 0)) doSpecial(b, base); break;
+    case 'heal': if (b.hp < b.maxhp * .55 && b.healT <= 0) doSpecial(b, base); break;
+    case 'inv': if (t2 || (d < 100 && b.hp < b.maxhp * .5)) doSpecial(b, base); break;
+    case 'nova': if (d < (g.rad || 110) + 30) doSpecial(b, base); break;
+    case 'bolt': case 'volley': case 'ring': case 'beam': case 'lob': if (d < (g.rng || 380)) { b.aim = aim; doSpecial(b, base); } break;
+    case 'summon': if (d < 450 && !G.sums.some(m => m.owner === b && m.kind === (g.kind || 'skel'))) doSpecial(b, base); break;
+    case 'pillar': case 'tornado': if (d < 300) doSpecial(b, base); break;
+    case 'rewind': { const h = b.hist[0]; if (h && h.hp - b.hp > b.maxhp * .25) doSpecial(b, base); } break;
+  }
+}
+function genDraw(c, f, t, r, ph) {
+  const g = CLASSES[f.cls].g, L = g.look, ac = L[2] || '#ddd', isM = g.a.t === 'melee' || g.a.t === 'nova';
+  if (ph === 0) {
+    c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+    if (isM) c.rotate(f.swing > 0 ? -1 + 2 * (1 - f.swing / .18) : .5);
+    const w = L[0], steel = '#d9dde8', wood = '#8b6b3a';
+    if (w === 'sword') { c.fillStyle = steel; c.fillRect(r * .5, -3, r + 16, 6); c.beginPath(); c.moveTo(r * 1.5 + 16, -3); c.lineTo(r * 1.5 + 26, 0); c.lineTo(r * 1.5 + 16, 3); c.fill(); c.fillStyle = ac; c.fillRect(r * .35, -6, 6, 12); }
+    else if (w === 'rapier') { c.strokeStyle = steel; c.lineWidth = 2.5; c.beginPath(); c.moveTo(r * .5, 0); c.lineTo(r + 36, 0); c.stroke(); c.strokeStyle = ac; c.lineWidth = 3; c.beginPath(); c.arc(r * .55 + 4, 0, 6, -1.4, 1.4); c.stroke(); }
+    else if (w === 'axe') { c.strokeStyle = wood; c.lineWidth = 4; c.beginPath(); c.moveTo(r * .3, 0); c.lineTo(r + 24, 0); c.stroke(); c.fillStyle = '#c9ced9'; c.strokeStyle = '#333'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(r + 22, 0, 7, 13, 0, 0, 7); c.fill(); c.stroke(); }
+    else if (w === 'hammer' || w === 'mace') { c.strokeStyle = wood; c.lineWidth = 4; c.beginPath(); c.moveTo(r * .3, 0); c.lineTo(r + 22, 0); c.stroke(); c.fillStyle = ac; c.strokeStyle = '#333'; c.lineWidth = 1.5; if (w === 'hammer') { c.fillRect(r + 14, -10, 14, 20); c.strokeRect(r + 14, -10, 14, 20); } else { c.beginPath(); c.arc(r + 24, 0, 8, 0, 7); c.fill(); c.stroke(); } }
+    else if (w === 'spear' || w === 'trident') { c.strokeStyle = wood; c.lineWidth = 3.5; c.beginPath(); c.moveTo(-4, 0); c.lineTo(r + 38, 0); c.stroke(); c.fillStyle = steel; c.beginPath(); if (w === 'spear') { c.moveTo(r + 36, -5); c.lineTo(r + 52, 0); c.lineTo(r + 36, 5); } else { for (const s2 of [-1, 0, 1]) { c.moveTo(r + 34, s2 * 6); c.lineTo(r + 50, s2 * 6); c.lineTo(r + 34, s2 * 6 + 3); } } c.fill(); c.strokeStyle = steel; c.lineWidth = 2; if (w === 'trident') { c.beginPath(); c.moveTo(r + 36, -6); c.lineTo(r + 36, 6); c.stroke(); } }
+    else if (w === 'staff') { c.strokeStyle = wood; c.lineWidth = 4; c.beginPath(); c.moveTo(-6, r * .65); c.lineTo(r + 24, r * .65); c.stroke(); c.fillStyle = ac; c.beginPath(); c.arc(r + 26, r * .65, 6, 0, 7); c.fill(); }
+    else if (w === 'gun' || w === 'cannon') { const th = w === 'cannon' ? 11 : 6, ln = w === 'cannon' ? 22 : 26; c.fillStyle = '#39393f'; c.fillRect(r * .5, r * .3, r * .5 + ln, th); c.fillStyle = ac; c.fillRect(r + ln, r * .3 - 1, 4, th + 2); }
+    else if (w === 'dagger') { c.fillStyle = steel; for (const s2 of [-1, 1]) { c.beginPath(); c.moveTo(r * .5, s2 * r * .6 - 3); c.lineTo(r + 14, s2 * r * .6); c.lineTo(r * .5, s2 * r * .6 + 3); c.fill(); } c.fillStyle = ac; for (const s2 of [-1, 1]) c.fillRect(r * .4, s2 * r * .6 - 4, 4, 8); }
+    else if (w === 'shield') { c.strokeStyle = wood; c.lineWidth = 4; c.beginPath(); c.moveTo(-2, r * .7); c.lineTo(r + 10, r * .7); c.stroke(); c.fillStyle = ac; c.strokeStyle = '#333'; c.lineWidth = 2; c.fillRect(r + 8, r * .7 - 13, 14, 26); c.strokeRect(r + 8, r * .7 - 13, 14, 26); }
+    else if (w === 'fists') { c.fillStyle = ac; c.strokeStyle = '#333'; c.lineWidth = 1.5; for (const s2 of [-1, 1]) { c.beginPath(); c.arc(r + 5, s2 * r * .6, 6.5, 0, 7); c.fill(); c.stroke(); } }
+    else if (w === 'bow') { c.strokeStyle = wood; c.lineWidth = 3.5; c.beginPath(); c.arc(r * .8, 0, r * .9, -1.2, 1.2); c.stroke(); c.strokeStyle = '#eee'; c.lineWidth = 1; c.beginPath(); c.moveTo(r * .8 + Math.cos(-1.2) * r * .9, Math.sin(-1.2) * r * .9); c.lineTo(r * .8 + Math.cos(1.2) * r * .9, Math.sin(1.2) * r * .9); c.stroke(); }
+    else if (w === 'sling') { c.strokeStyle = wood; c.lineWidth = 2.5; c.beginPath(); c.moveTo(r * .4, r * .5); c.quadraticCurveTo(r + 10, r * .9, r + 16, r * .3); c.stroke(); c.fillStyle = ac; c.beginPath(); c.arc(r + 16, r * .3, 4, 0, 7); c.fill(); }
+    c.restore();
+  } else {
+    const h = L[1]; c.save(); c.lineCap = 'round';
+    if (h === 'helmet' || h === 'crest') { c.fillStyle = ac; c.strokeStyle = 'rgba(0,0,0,.5)'; c.lineWidth = 2; c.beginPath(); c.arc(0, 0, r * .85, Math.PI * .55, Math.PI * 1.45); c.fill(); c.stroke(); if (h === 'crest') { c.fillStyle = '#c0392b'; c.beginPath(); c.moveTo(-r * .2, -4); c.lineTo(-r - 10, 0); c.lineTo(-r * .2, 4); c.fill(); } }
+    else if (h === 'hat') { c.fillStyle = ac; c.strokeStyle = 'rgba(0,0,0,.5)'; c.lineWidth = 2; c.beginPath(); c.ellipse(-r * .15, 0, r * .45, r * 1.05, 0, 0, 7); c.fill(); c.stroke(); c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.arc(-r * .15, 0, r * .3, 0, 7); c.fill(); }
+    else if (h === 'bandana' || h === 'headband') { c.save(); c.beginPath(); c.arc(0, 0, r, 0, 7); c.clip(); c.fillStyle = ac; c.fillRect(-r * (h === 'bandana' ? .45 : .2), -r, r * (h === 'bandana' ? .5 : .24), r * 2); c.restore(); c.strokeStyle = ac; c.lineWidth = 3; c.beginPath(); c.moveTo(-r * .3, 0); c.quadraticCurveTo(-r - 8, 3 * Math.sin(t * 8), -r - 16, 6 * Math.sin(t * 8 + 1)); c.stroke(); }
+    else if (h === 'horns') { c.fillStyle = ac; c.strokeStyle = 'rgba(0,0,0,.5)'; c.lineWidth = 1.5; for (const s2 of [-1, 1]) { c.beginPath(); c.moveTo(r * .1, s2 * r * .8); c.lineTo(r * .5, s2 * (r + 11)); c.lineTo(-r * .25, s2 * r * .9); c.closePath(); c.fill(); c.stroke(); } }
+    else if (h === 'mask') { c.save(); c.beginPath(); c.arc(0, 0, r, 0, 7); c.clip(); c.fillStyle = 'rgba(15,10,25,.82)'; c.fillRect(r * .15, -r, r, r * 2); c.fillStyle = ac; c.fillRect(r * .15, -2, r * .85, 4); c.restore(); }
+    else if (h === 'hood') { c.fillStyle = 'rgba(15,12,30,.72)'; c.beginPath(); c.arc(-r * .1, 0, r * .95, Math.PI * .45, Math.PI * 1.55); c.fill(); c.strokeStyle = ac; c.lineWidth = 2; c.stroke(); }
+    c.restore();
+  }
+}
 
 /* ---------- STATE ---------- */
 const G = { state: 'menu', player: null, bot: null, fs: [], mode: 1, tw: [0, 0], fightT: 0, sdT: 0, diff: 'normal', round: 1, cd: 0, rt: 0, projs: [], bombs: [], sums: [], walls: [], tempP: [], parts: [], texts: [], fx: [],
@@ -941,6 +1100,7 @@ const ACH = [
   { id: 'tw10', n: 'Escalador', d: 'Chega ao andar 10 da Torre', r: 400, cur: () => save.tower.best, g: 10 },
   { id: 'tw20', n: 'Senhor da Torre', d: 'Chega ao andar 20 da Torre', r: 1000, cur: () => save.tower.best, g: 20 },
   { id: 'skin1', n: 'Estilo próprio', d: 'Compra a tua primeira skin', r: 100, cur: () => skinCount(), g: 1 },
+  { id: 'skin20', n: 'Guarda-roupa', d: 'Compra 20 skins', r: 1000, cur: () => skinCount(), g: 20 },
   { id: 'skin5', n: 'Fashionista', d: 'Compra 5 skins', r: 400, cur: () => skinCount(), g: 5 },
   { id: 's10', n: 'Imparável', d: '10 vitórias seguidas', r: 400, cur: () => save.stats.best, g: 10 },
   { id: 'h10', n: 'Mestre de heróis', d: 'Ganha com 10 heróis diferentes', r: 200, cur: () => CKEYS.filter(k => stC(k) > 0).length, g: 10 },
@@ -1045,7 +1205,7 @@ function renderArenaRow() {
   }
 }
 // shop
-let shopTab = 'pot', shopHero = 0; const shopPrev = [];
+let shopTab = 'pot', shopHero = 0, skinCat = 'all'; const shopPrev = [];
 const buySfx = () => { tone(988, .08, 'square', .1); tone(1319, .15, 'square', .1, 0, .08); };
 document.querySelectorAll('#shopTabs [data-tab]').forEach(b => b.addEventListener('click', () => { audio(); SFX.click(); shopTab = b.dataset.tab; $('shopMsg').textContent = ''; renderShop(); }));
 function shopRow(icon, title, desc, rightHtml, btnLabel, disabled, onBuy) {
@@ -1106,14 +1266,17 @@ function renderShop() {
   } else if (shopTab === 'skin') {
     const k = CKEYS[shopHero], c = CLASSES[k], open = isUnlocked(k), S = skinOf(k);
     body.appendChild(shopHeroSel(kk => { const z = save.skins[kk]; return z && z.sel ? SKINS.find(x => x.id === z.sel).n : 'Original'; }));
-    [{ id: '', n: 'Original', price: 0 }, ...SKINS].forEach(sk => {
+    { const cats = [['all', 'Todas'], ['cor', 'Cores'], ['pad', 'Padrões'], ['fx', 'Efeitos ✨'], ['leg', 'Lendárias 👑']], r = document.createElement('div'); r.className = 'row'; r.style.gap = '6px';
+      for (const [id, lab] of cats) { const n = id === 'all' ? SKINS.length : SKINS.filter(x => x.cat === id).length, o = id === 'all' ? S.own.length : SKINS.filter(x => x.cat === id && S.own.includes(x.id)).length, b = document.createElement('button'); b.className = 'btn small' + (skinCat === id ? ' sel' : ''); b.textContent = `${lab} ${o}/${n}`; b.addEventListener('click', () => { audio(); SFX.click(); skinCat = id; renderShop(); }); r.appendChild(b); }
+      body.appendChild(r); }
+    [{ id: '', n: 'Original', price: 0 }, ...SKINS.filter(x => skinCat === 'all' || x.cat === skinCat)].forEach(sk => {
       const own = !sk.id || S.own.includes(sk.id), eq = S.sel === sk.id;
-      const row = shopRow('<canvas width="76" height="60"></canvas>', sk.n, c.name + (sk.id === 'rainbow' ? ' · cores animadas' : sk.id ? ' · só muda o aspeto' : ' · cor original'), '',
+      const row = shopRow('<canvas width="76" height="60"></canvas>', sk.n, c.name + (sk.id ? ({ cor: ' · cor', pad: ' · padrão', fx: ' · efeito animado', leg: ' · lendária ✨' })[sk.cat] : ' · cor original'), '',
         !open ? '🔒 Herói bloqueado' : eq ? '✔ Equipada' : own ? 'Equipar' : '🪙 ' + sk.price, !open || eq || (!own && save.coins < sk.price),
         () => { if (!own) { save.coins -= sk.price; S.own.push(sk.id); buySfx(); $('shopMsg').textContent = `${c.name} ganhou a skin ${sk.n}!`; } else { SFX.click(); $('shopMsg').textContent = ''; } S.sel = sk.id; persist(); checkAch(); renderShop(); });
-      body.appendChild(row); shopPrev.push({ c: row.querySelector('canvas').getContext('2d'), k, t: 0, s: sk.id });
+      body.appendChild(row); shopPrev.push({ c: row.querySelector('canvas').getContext('2d'), k, t: 0, s: sk.id, z: 1.15, x: 31, y: 27 });
     });
-    if (!$('shopMsg').textContent) $('shopMsg').textContent = 'As skins são por herói e só mudam a cor. Compras uma vez e podes trocar quando quiseres.';
+    if (!$('shopMsg').textContent) $('shopMsg').textContent = 'As skins são por herói e só mudam o aspeto. Compras uma vez e podes trocar quando quiseres.';
   } else {
     const O = ensureOffers();
     O.items.forEach((it, i) => {
@@ -1218,11 +1381,12 @@ function hurt(t, dmg, sx, sy, kb, quiet) {
 }
 function spawnProj(f, a, o) {
   G.projs.push({ x: f.x + Math.cos(a) * (f.r + 4), y: f.y + Math.sin(a) * (f.r + 4), vx: Math.cos(a) * o.speed, vy: Math.sin(a) * o.speed,
-    r: o.r, dmg: o.dmg * f.dmgMul, owner: f, type: o.type, life: (o.life || 2) * (f.rngMul || 1), slow: !!o.slow, burn: !!o.burn, steal: o.steal || 0, pois: !!o.pois, home: o.home || 0, kb: o.kb || 90 });
+    r: o.r, dmg: o.dmg * f.dmgMul, owner: f, type: o.type, life: (o.life || 2) * (f.rngMul || 1), slow: !!o.slow, burn: !!o.burn, steal: o.steal || 0, pois: !!o.pois, home: o.home || 0, kb: o.kb || 90, stun: o.stun || 0, root: o.root || 0, pierce: !!o.pierce });
 }
 function doAttack(f) {
   if (f.cdB > 0 || G.state !== 'fight' || f.hp <= 0 || f.stunT > 0) return;
   const c = f.c, a = f.aim, rg = c.basic.range * (f.rngMul || 1); f.cdB = c.basic.cd;
+  if (c.g) { genAttack(f); return; }
   if (f.cls === 'warrior') {
     f.swing = .18; SFX.swing(); G.fx.push({ t: 'arc', x: f.x, y: f.y, a, life: .18, max: .18, range: rg, f });
     for (const o of foes(f)) {
@@ -1339,6 +1503,7 @@ function explode(b) {
 function doSpecial(f, dirA) {
   if (f.cdS > 0 || G.state !== 'fight' || f.hp <= 0 || f.stunT > 0) return false;
   f.cdS = f.spCd; if (f === G.player) qEvent('sp');
+  if (f.c.g) { genSpecial(f, dirA); return true; }
   if (f.cls === 'warrior') { f.dashT = .22; f.dashA = f.aim; f.dashHit = false; f.dashSpd = 720; f.dashDmg = f.c.special.dmg; f.dashFx = null; SFX.dash(); }
   else if (f.cls === 'mage') {
     burst(f.x, f.y, '#b9c2ff', 16, 220, 4);
@@ -1663,6 +1828,7 @@ function aiSpecialNew(b, d, base, aim) {
     case 'knives': if (d < 240) doSpecial(b, base); break;
     case 'samurai': if (d > 110 && d < 320) { b.aim = aim; doSpecial(b, base); } break;
     case 'chrono': { const h = b.hist[0]; if (h && h.hp - b.hp > b.maxhp * .25) doSpecial(b, base); } break;
+    default: if (CLASSES[b.cls].g) aiSpecialGen(b, d, base, aim, t2);
   }
 }
 function aiThink(b, dt) {
@@ -1865,7 +2031,7 @@ function update(dt) {
     if (q.type !== 'lob') for (const m of G.sums) if (m.owner.team !== q.owner.team && Math.hypot(q.x - m.x, q.y - m.y) < m.r + q.r) { m.hp -= q.dmg; burst(m.x, m.y, '#ddd', 5, 90, 2); hitS = true; break; }
     if (hitS) { G.projs.splice(i, 1); continue; }
     let t = null;
-    if (q.type !== 'lob') for (const o of G.fs) if (o.team !== q.owner.team && o.hp > 0 && o.inv <= 0 && Math.hypot(q.x - o.x, q.y - o.y) < o.r + q.r) { t = o; break; }
+    if (q.type !== 'lob') for (const o of G.fs) if (o.team !== q.owner.team && o.hp > 0 && o.inv <= 0 && !(q.hits && q.hits.includes(o)) && Math.hypot(q.x - o.x, q.y - o.y) < o.r + q.r) { t = o; break; }
     if (t) {
       if (t.reflT > 0) { q.owner = t; q.vx *= -1; q.vy *= -1; q.life = Math.max(q.life, .8); G.fx.push({ t: 'ring', x: q.x, y: q.y, life: .25, max: .25, range: 30, col: '#8fe8ff' }); SFX.hit(); continue; }
       const before = t.hp; hurt(t, q.dmg, t.x - q.vx, t.y - q.vy, q.kb);
@@ -1873,7 +2039,8 @@ function update(dt) {
       if (q.burn) t.burn = { t: 3, dmg: 2.5 * q.owner.dmgMul, tick: .5 };
       if (q.pois) t.burn = { t: 4, dmg: 3 * q.owner.dmgMul, tick: .5, g: 1 };
       if (q.steal && q.owner.hp > 0) q.owner.hp = Math.min(q.owner.maxhp, q.owner.hp + (before - t.hp) * q.steal);
-      G.projs.splice(i, 1);
+      if (q.stun && t.hp > 0 && t.shield <= 0) t.stunT = Math.max(t.stunT, q.stun); if (q.root && t.hp > 0 && t.shield <= 0) t.rootT = Math.max(t.rootT, q.root);
+      if (q.pierce) (q.hits || (q.hits = [])).push(t); else G.projs.splice(i, 1);
     }
   }
   for (let i = G.bombs.length - 1; i >= 0; i--) {
@@ -1923,6 +2090,7 @@ function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w
 const PSTYLE = { dart: { c: '#8fe05a', k: '#e8ffd0', s: 'dia' }, web: { c: '#e8e8f0', k: '#9aa', s: 'orb' }, feather: { c: '#e8d28a', k: '#fff', s: 'dia' }, honey: { c: '#f2c230', k: '#fff0a0', s: 'orb' }, spirit: { c: '#7fe8c0', k: '#fff', s: 'orb' }, drop: { c: '#4fc8d8', k: '#d8fbff', s: 'orb' }, holy: { c: '#fff0a0', k: '#fff', s: 'orb' }, hellfire: { c: '#d83020', k: '#ffb347', s: 'orb' }, hex: { c: '#7a3aa0', k: '#e0a0ff', s: 'orb' }, wisp: { c: '#cfe3f0', k: '#fff', s: 'orb' }, bee: { c: '#f2c230', k: '#222', s: 'orb' }, chi: { c: '#e8923a', k: '#fff0c0', s: 'cres' }, spear: { c: '#e8dcc0', k: '#8b6b3a', s: 'dia' }, quarrel: { c: '#d8d49a', k: '#ffffff', s: 'dia' }, bullet: { c: '#ffd36a', k: '#fff6c8', s: 'orb' }, knife: { c: '#dfe3ea', k: '#cfd36a', s: 'dia' }, ember: { c: '#ff7a2a', k: '#ffe08a', s: 'orb' }, shard: { c: '#9fe3ff', k: '#ffffff', s: 'dia' }, drain: { c: '#8a5fb8', k: '#7dff9a', s: 'orb' },
   card: { c: '#ffd0ee', k: '#f08fd0', s: 'rect' }, orb: { c: '#5a3a8a', k: '#c58aff', s: 'orb' }, missile: { c: '#b49bff', k: '#ffffff', s: 'dia' },
   gust: { c: '#d8fff0', k: '#9fe8cf', s: 'cres' }, rock: { c: '#9a7b4f', k: '#6b5233', s: 'orb' }, bolt: { c: '#ffd1a0', k: '#ffffff', s: 'dia' } };
+for (const g of GEN) for (const sfx of ['', '_s']) PSTYLE['p_' + g.id + sfx] = { c: (g.look && g.look[2]) || g.color, k: '#ffffff', s: (sfx ? g.s.ps : g.a.ps) || 'orb' };
 const ART3 = new Set(['wolf', 'bear', 'snake', 'spider', 'treant', 'hawk', 'beekeeper', 'shaman', 'boar', 'nymph', 'reaper', 'vampire', 'cleric', 'angel', 'demon', 'witch', 'monk', 'templar', 'ghost', 'darkknight']);
 function armArt3(c, f, t, r, ph, k, sw) {
   const line = (x1, y1, x2, y2, col, w) => { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); };
@@ -2095,8 +2263,9 @@ function drawFighter(c, f, t, alpha = 1) {
   } else if (f.cls === 'chrono') {
     c.save(); c.translate(r + 14, r * .5); c.fillStyle = '#ffe9c0'; c.strokeStyle = '#8a6a3a'; c.lineWidth = 2; c.beginPath(); c.moveTo(-6, -9); c.lineTo(6, -9); c.lineTo(0, 0); c.lineTo(6, 9); c.lineTo(-6, 9); c.lineTo(0, 0); c.closePath(); c.fill(); c.stroke(); c.restore();
   }
+  if (CLASSES[f.cls].g) genDraw(c, f, t, r, 0);
   if (ARM2[f.cls]) armArt(c, f, t, r, 0);
-  c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 3; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); c.stroke();
+  c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 3; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); c.stroke(); if (f.skin) skinDeco(c, f, r, t);
   c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.arc(-r * .25, -r * .3, r * .55, 0, 7); c.fill();
   if (f.cls === 'mage') { c.fillStyle = 'rgba(20,20,70,.55)'; c.beginPath(); c.arc(-r * .15, 0, r * .8, 0, 7); c.fill(); c.strokeStyle = '#ffd36a'; c.lineWidth = 1.5; c.stroke(); }
   if (f.cls === 'archer') { c.fillStyle = 'rgba(0,50,20,.55)'; c.beginPath(); c.arc(-r * .2, 0, r * .85, Math.PI * .55, Math.PI * 1.45); c.fill(); }
@@ -2114,6 +2283,7 @@ function drawFighter(c, f, t, alpha = 1) {
   if (f.cls === 'geo') { c.fillStyle = '#6a5a40'; c.beginPath(); c.arc(0, 0, r * .8, Math.PI * .6, Math.PI * 1.4); c.fill(); }
   if (f.cls === 'chrono') { c.save(); c.rotate(t); c.strokeStyle = '#d9b878'; c.lineWidth = 2; c.beginPath(); c.arc(0, 0, r + 3, 0, 7); c.stroke(); for (let i = 0; i < 12; i++) { const an = i * Math.PI / 6; c.beginPath(); c.moveTo(Math.cos(an) * (r + 3), Math.sin(an) * (r + 3)); c.lineTo(Math.cos(an) * (r + 7), Math.sin(an) * (r + 7)); c.stroke(); } c.restore(); }
   if (f.cls === 'druid') { c.fillStyle = 'rgba(10,60,50,.6)'; c.beginPath(); c.arc(-r * .2, 0, r * .85, Math.PI * .55, Math.PI * 1.45); c.fill(); c.strokeStyle = '#8b5a2b'; c.lineWidth = 2.5; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(r * .1, s * r * .85); c.lineTo(r * .5, s * (r + 9)); c.lineTo(r * .8, s * (r + 6)); c.stroke(); } }
+  if (CLASSES[f.cls].g) genDraw(c, f, t, r, 1);
   if (ARM2[f.cls]) armArt(c, f, t, r, 1);
   if (f.armT) drawArmor(c, f, t, r);
   c.fillStyle = '#fff'; for (const s of [-1, 1]) { c.beginPath(); c.arc(r * .45, s * r * .3, 3.2, 0, 7); c.fill(); }
@@ -2388,7 +2558,7 @@ function frame(now) {
   }
   if (!$('s-shop').classList.contains('hidden')) {
     const t = now / 1000;
-    for (const pv of shopPrev) { pv.c.setTransform(1, 0, 0, 1, 0, 0); pv.c.clearRect(0, 0, 76, 60); pv.c.setTransform(.7, 0, 0, .7, 0, 0); drawFighter(pv.c, { skin: pv.s, armT: pv.t, x: 36, y: 42, r: CLASSES[pv.k].r, cls: pv.k, aim: Math.sin(t * 1.5) * .4, flash: 0, swing: 0 }, t); }
+    for (const pv of shopPrev) { pv.c.setTransform(1, 0, 0, 1, 0, 0); pv.c.clearRect(0, 0, 76, 60); pv.c.setTransform(pv.z || .7, 0, 0, pv.z || .7, 0, 0); drawFighter(pv.c, { skin: pv.s, armT: pv.t, x: pv.x || 36, y: pv.y || 42, r: CLASSES[pv.k].r, cls: pv.k, aim: Math.sin(t * 1.5) * .4, flash: 0, swing: 0 }, t); }
   }
   if (G.state === 'replay' && G.rp) { replayStep(dt); if (G.rp) renderReplay(); else render(); } else render();
   requestAnimationFrame(frame);
@@ -2398,7 +2568,7 @@ requestAnimationFrame(frame);
 
 // debug / test hooks
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-window.__dbg = { tnPlay, tnShow, roundDone, endReplay, towerSpawn, towerNext, towerPay, endTowerRun, evMeteors, evCrate, evStep, zoneR, checkAch, ACH, renderStats, applyGear, botTiers, drawQuestAnim, MUS, musicTick, foes, opp, doSpecial, doAttack, aiThink, ALL, drinkIdx, POTIONS, ARMORS, renderShop, G, setArena, ARENAS, update, startMatch, DIFF, CLASSES, save, CKEYS, mkFighter, resetRound, endMatch, keys };
+window.__dbg = { drawFighter, tnPlay, tnShow, roundDone, endReplay, towerSpawn, towerNext, towerPay, endTowerRun, evMeteors, evCrate, evStep, zoneR, checkAch, ACH, renderStats, applyGear, botTiers, drawQuestAnim, MUS, musicTick, foes, opp, doSpecial, doAttack, aiThink, ALL, drinkIdx, POTIONS, ARMORS, renderShop, G, setArena, ARENAS, update, startMatch, DIFF, CLASSES, save, CKEYS, mkFighter, resetRound, endMatch, keys };
 })();
 </script>
 </body>
