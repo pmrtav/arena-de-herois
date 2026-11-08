@@ -74,6 +74,14 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
 #btnSp .cdv{position:absolute;inset:0;border-radius:50%;background:#000a;clip-path:inset(0 0 0 0)}
 #pauseBtn{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:6;display:none;padding:4px 16px;border-radius:999px;border:1px solid #ffffff44;background:#0008;color:#fff;font-size:14px;cursor:pointer}
 #pauseBtn.on{display:block}
+#bQuests{display:flex;align-items:center;justify-content:center;gap:10px}#qAnim{width:72px;height:40px;margin:-8px 0}
+.qbadge{display:none;margin-left:8px;width:22px;height:22px;line-height:22px;border-radius:50%;background:#e5533d;color:#fff;font-weight:800;font-size:14px;text-align:center;vertical-align:middle;animation:qpulse 1.2s infinite}.qbadge.on{display:inline-block}
+@keyframes qpulse{50%{transform:scale(1.18)}}
+.qcard{width:100%;background:var(--panel);border:1px solid #2b3150;border-left:5px solid var(--qc,#888);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:14px}
+.qcard>div{flex:1;min-width:0}.qcard .qt{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--qc)}.qcard b{display:block;font-size:17px;margin:2px 0 6px}
+.qbar{height:9px;border-radius:5px;background:#0006;overflow:hidden}.qbar i{display:block;height:100%;background:var(--qc);transition:width .3s}.qcard small{color:var(--mute);font-size:13px}
+.qrew{font-weight:800;color:var(--gold);white-space:nowrap;font-size:18px}
+#toast{white-space:pre-line;position:fixed;top:16px;left:50%;transform:translate(-50%,-140%);z-index:40;max-width:min(520px,92vw);background:#1b1f33;border:2px solid var(--gold);border-radius:14px;padding:12px 20px;color:#fff;font-weight:700;text-align:center;box-shadow:0 8px 30px #000a;transition:transform .35s;pointer-events:none}#toast.on{transform:translate(-50%,0)}
 #bSkip{position:fixed;right:12px;bottom:8px;z-index:6;display:none;padding:6px 18px;border-radius:999px;border:1px solid #ffb03a99;background:#000a;color:#ffd58a;font-size:14px;font-weight:700;cursor:pointer}#bSkip.on{display:block}
 </style>
 </head>
@@ -97,6 +105,7 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
     <button class="btn primary" id="bPlay">Começar jogo</button>
     <button class="btn" id="bChar">Escolher personagem</button>
     <button class="btn" id="bShop">Loja</button>
+    <button class="btn" id="bQuests"><canvas id="qAnim" width="144" height="80"></canvas><span>Missões</span><span class="qbadge" id="qBadge">!</span></button>
     <button class="btn" id="bSet">Settings</button>
     <button class="btn" id="bQuit">Sair do jogo</button>
   </div>
@@ -133,7 +142,7 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
 <div class="screen hidden" id="s-shop">
   <h2>Loja</h2>
   <div class="chip" id="shopCoins"></div>
-  <div class="row" id="shopTabs" style="gap:8px"><button class="btn small sel" data-tab="pot">🧪 Poções</button><button class="btn small" data-tab="arm">🛡 Armaduras</button></div>
+  <div class="row" id="shopTabs" style="gap:8px"><button class="btn small sel" data-tab="pot">🧪 Poções</button><button class="btn small" data-tab="arm">🛡 Armaduras</button><button class="btn small" data-tab="wpn">🗡 Armas</button><button class="btn small" data-tab="off">🎁 Ofertas</button></div>
   <div id="shopBody" class="col" style="width:min(560px,92vw)"></div>
   <p class="hint" id="shopMsg"></p>
   <button class="btn" id="bShopBack">← Voltar</button>
@@ -149,6 +158,16 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
   <button class="btn danger small" id="bReset">Apagar progresso</button>
   <button class="btn" id="bSetBack">← Voltar</button>
 </div>
+
+<!-- MISSÕES -->
+<div class="screen hidden" id="s-quests">
+  <h2>Missões</h2>
+  <div class="chip" id="qTimer"></div>
+  <div id="qBody" style="width:min(640px,100%);display:flex;flex-direction:column;gap:10px"></div>
+  <p class="hint" id="qHint">Cada missão paga mais moedas quanto mais difícil for.</p>
+  <button class="btn" id="bQBack">← Voltar</button>
+</div>
+<div id="toast"></div>
 
 <!-- PAUSA -->
 <div class="screen hidden" id="s-pause">
@@ -234,7 +253,7 @@ const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI;
 const SAVE_KEY = 'arena-herois-v1';
 const ALL = ['warrior', 'mage', 'archer', 'ninja', 'paladin', 'druid', 'bomber', 'pyro', 'cryo', 'electro', 'necro', 'illusion', 'shadow', 'arcane', 'wind', 'geo', 'chrono', 'spear', 'berserk', 'duelist', 'crossbow', 'sniper', 'gunslinger', 'legion', 'chain', 'knives', 'samurai', 'wolf', 'bear', 'snake', 'spider', 'treant', 'hawk', 'beekeeper', 'shaman', 'boar', 'nymph', 'reaper', 'vampire', 'cleric', 'angel', 'demon', 'witch', 'monk', 'templar', 'ghost', 'darkknight'];
 const save = { levels: Object.fromEntries(ALL.map(k => [k, 1])), selected: 'warrior', arena: 'random', mode: 1, coins: 0,
-  potions: { fury: 0, speed: 0, regen: 0, reflex: 0, ward: 0, vamp: 0, ghost: 0, giant: 0 }, armor: Object.fromEntries(ALL.map(k => [k, 0])), pts: Object.fromEntries(ALL.map(k => [k, 0])), unlocked: null,
+  potions: { fury: 0, speed: 0, regen: 0, reflex: 0, ward: 0, vamp: 0, ghost: 0, giant: 0 }, armor: Object.fromEntries(ALL.map(k => [k, 0])), weapon: Object.fromEntries(ALL.map(k => [k, 0])), boost: { gold: 0, sage: 0 }, offers: null, quests: null, pts: Object.fromEntries(ALL.map(k => [k, 0])), unlocked: null,
   settings: { volume: 0.6, sfx: true, music: true, touch: ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) } };
 try {
   const o = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
@@ -247,6 +266,10 @@ try {
     if (Number.isFinite(o.coins)) save.coins = Math.max(0, Math.floor(o.coins));
     for (const p of ['fury', 'speed', 'regen', 'reflex', 'ward', 'vamp', 'ghost', 'giant']) if (Number.isFinite(o.potions?.[p])) save.potions[p] = clamp(Math.round(o.potions[p]), 0, 9);
     for (const k of ALL) if (Number.isFinite(o.armor?.[k])) save.armor[k] = clamp(Math.round(o.armor[k]), 0, 8);
+    for (const k of ALL) if (Number.isFinite(o.weapon?.[k])) save.weapon[k] = clamp(Math.round(o.weapon[k]), 0, 5);
+    for (const b of ['gold', 'sage']) if (Number.isFinite(o.boost?.[b])) save.boost[b] = clamp(Math.round(o.boost[b]), 0, 3);
+    if (o.quests && typeof o.quests.slot === 'string' && Array.isArray(o.quests.items) && o.quests.items.length === 3 && o.quests.items.every(q => q && typeof q.k === 'string' && [0, 1, 2].includes(q.tier) && Number.isFinite(q.goal) && Number.isFinite(q.prog))) save.quests = o.quests;
+    if (o.offers && typeof o.offers.day === 'string' && Array.isArray(o.offers.items) && o.offers.items.length === 3 && Array.isArray(o.offers.bought)) save.offers = o.offers;
     if (o.arena === 'random' || Object.prototype.hasOwnProperty.call(ARENAS, o.arena)) save.arena = o.arena;
     if (o.settings) {
       if (Number.isFinite(o.settings.volume)) save.settings.volume = clamp(o.settings.volume, 0, 1);
@@ -535,6 +558,13 @@ const ARMORS = [{ name: 'Couro', red: .08, price: 100 }, { name: 'Ferro', red: .
   { name: 'Vital', red: .34, price: 2200, hp: .15, desc: '−34% de dano e +15% de vida máxima' },
   { name: 'Espinhos', red: .36, price: 3200, thorns: .25, desc: '−36% de dano e devolve 25% do dano a quem estiver perto' },
   { name: 'Celestial', red: .40, price: 5000, spd: .08, regen: 1.5, cdr: .12, desc: '−40% de dano, +8% de velocidade, cura 1,5 vida/s e cooldowns 12% mais rápidos' }];
+const WEAPONS = [
+  { name: 'Afiada', price: 200, dmg: .07, cdr: .04, rng: 0 }, { name: 'Reforçada', price: 450, dmg: .14, cdr: .08, rng: 0 },
+  { name: 'Longa', price: 800, dmg: .21, cdr: .12, rng: .08 }, { name: 'Mestra', price: 1400, dmg: .28, cdr: .16, rng: .08 },
+  { name: 'Lendária', price: 2400, dmg: .35, cdr: .20, rng: .12, fire: true }];
+const wDesc = i => { const w = WEAPONS[i]; return `+${Math.round(w.dmg * 100)}% de dano · recarrega ${Math.round(w.cdr * 100)}% mais rápido` + (w.rng ? ` · +${Math.round(w.rng * 100)}% de alcance` : '') + (w.fire ? ' · os teus golpes incendeiam' : ''); };
+const weaponLabel = k => save.weapon[k] > 0 ? `${WEAPONS[save.weapon[k] - 1].name} (+${Math.round(WEAPONS[save.weapon[k] - 1].dmg * 100)}%)` : 'Nenhuma';
+const RARES = { gold: { name: 'Poção Dourada', icon: '🏺', price: 180, desc: 'A tua próxima vitória dá ×2 moedas' }, sage: { name: 'Pergaminho do Sábio', icon: '📜', price: 220, desc: 'A tua próxima vitória dá +1 ponto de nível' } };
 const armorLabel = k => save.armor[k] > 0 ? `${ARMORS[save.armor[k] - 1].name} (−${Math.round(ARMORS[save.armor[k] - 1].red * 100)}%)` : 'Nenhuma';
 const IDEAL = { warrior: 60, mage: 250, archer: 310, ninja: 240, paladin: 55, druid: 270, bomber: 210, pyro: 240, cryo: 215, electro: 230, necro: 280, illusion: 270, shadow: 200, arcane: 270, wind: 250, geo: 230, chrono: 270 , spear: 105, berserk: 55, duelist: 58, crossbow: 300, sniper: 400, gunslinger: 230, legion: 55, chain: 140, knives: 260, samurai: 62, wolf: 55, bear: 55, snake: 220, spider: 230, treant: 60, hawk: 260, beekeeper: 250, shaman: 270, boar: 55, nymph: 250, reaper: 65, vampire: 58, cleric: 240, angel: 320, demon: 240, witch: 280, monk: 52, templar: 58, ghost: 250, darkknight: 60};
 const PSPEED = { warrior: 0, mage: 360, archer: 700, ninja: 620, paladin: 0, druid: 480, bomber: 340, pyro: 430, cryo: 520, electro: 0, necro: 420, illusion: 560, shadow: 0, arcane: 520, wind: 420, geo: 280, chrono: 500 , spear: 0, berserk: 0, duelist: 0, crossbow: 800, sniper: 0, gunslinger: 820, legion: 0, chain: 0, knives: 760, samurai: 0, wolf: 0, bear: 0, snake: 560, spider: 480, treant: 0, hawk: 520, beekeeper: 400, shaman: 420, boar: 0, nymph: 460, reaper: 0, vampire: 0, cleric: 480, angel: 0, demon: 440, witch: 400, monk: 0, templar: 0, ghost: 380, darkknight: 0};
@@ -569,7 +599,7 @@ function resetRound() {
   G.state = 'countdown'; G.cd = 2.6; G.lastNum = 0; G.fightT = 0; G.sdT = 0; G.hole = null; if (ARENA.hole) holeReset(); G.winner = null; wantSp = false; G.spec = false; $('bSkip').classList.remove('on');
 }
 function startMatch(diff) {
-  G.rndArena = save.arena === 'random'; G.diff = diff; G.mode = save.mode === 2 ? 2 : save.mode === 3 ? 3 : 1; G.tw = [0, 0, 0, 0]; const D = DIFF[diff], BL = diff === 'normal' ? save.levels[save.selected] : D.botLvl;
+  G.potUsed = 0; G.rndArena = save.arena === 'random'; G.diff = diff; G.mode = save.mode === 2 ? 2 : save.mode === 3 ? 3 : 1; G.tw = [0, 0, 0, 0]; const D = DIFF[diff], BL = diff === 'normal' ? save.levels[save.selected] : D.botLvl;
   { const ks = Object.keys(ARENAS); setArena(save.arena === 'random' ? ks[Math.floor(Math.random() * ks.length)] : save.arena); }
   const others = CKEYS.filter(k => k !== save.selected);
   for (let i = others.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [others[i], others[j]] = [others[j], others[i]]; }
@@ -587,6 +617,7 @@ function startMatch(diff) {
   }
   { const ar = save.armor[save.selected] > 0 ? ARMORS[save.armor[save.selected] - 1] : null, P = G.player; P.armor = ar ? ar.red : 0;
     if (ar) { P.armSpd = ar.spd || 0; P.thorns = ar.thorns || 0; P.armRegen = ar.regen || 0; P.armCdr = ar.cdr || 0; if (ar.hp) { P.maxhp = Math.round(P.maxhp * (1 + ar.hp)); P.hp = P.maxhp; } } }
+  { const wt = save.weapon[save.selected] | 0, P = G.player; if (wt > 0) { const w = WEAPONS[wt - 1]; P.baseDmg *= 1 + w.dmg; P.dmgMul = P.baseDmg; P.armCdr += w.cdr; P.rngMul = 1 + w.rng; P.wFire = !!w.fire; } }
   { G.player.armT = save.armor[save.selected] | 0;
     const bt = lv => diff === 'hard' ? 4 : diff === 'easy' ? Math.min(1, Math.floor(lv / 3)) : Math.min(4, Math.floor(lv / 2));
     for (const f of G.fs) if (f !== G.player && !(f.armT > 0)) f.armT = bt(f.lvl); }
@@ -639,14 +670,14 @@ bA.addEventListener('pointerup', atkUp); bA.addEventListener('pointercancel', at
 bS.addEventListener('pointerdown', e => { e.preventDefault(); audio(); wantSp = true; });
 
 /* ---------- SCREENS ---------- */
-const screens = ['s-menu', 's-char', 's-diff', 's-shop', 's-set', 's-pause', 'result', 's-bye'];
+const screens = ['s-menu', 's-char', 's-diff', 's-shop', 's-quests', 's-set', 's-pause', 'result', 's-bye'];
 let curScreen = 's-menu';
 function escBack() {
   if (isPlaying() || G.state === 'paused') { togglePause(); return; }
   if (curScreen === 'result') { SFX.click(); toMenu(); return; }
-  if (['s-char', 's-diff', 's-shop', 's-set', 's-bye'].includes(curScreen)) { SFX.click(); showScreen('s-menu'); }
+  if (['s-char', 's-diff', 's-shop', 's-quests', 's-set', 's-bye'].includes(curScreen)) { SFX.click(); showScreen('s-menu'); }
 }
-function showScreen(id) { curScreen = id; for (const s of screens) $(s).classList.toggle('hidden', s !== id); if (id === 's-menu') refreshMenu(); if (id === 's-char') renderCards(); if (id === 's-set') syncSettings(); if (id === 's-diff') { renderModeRow(); renderArenaRow(); } if (id === 's-shop') renderShop(); }
+function showScreen(id) { curScreen = id; for (const s of screens) $(s).classList.toggle('hidden', s !== id); if (id === 's-menu') refreshMenu(); if (id === 's-char') renderCards(); if (id === 's-set') syncSettings(); if (id === 's-diff') { renderModeRow(); renderArenaRow(); } if (id === 's-shop') renderShop(); if (id === 's-quests') renderQuests(); }
 const isPlaying = () => ['countdown', 'fight', 'roundEnd'].includes(G.state);
 function setPlayUI(on) {
   $('pauseBtn').classList.toggle('on', on); $('bSkip').classList.toggle('on', on && !!G.spec);
@@ -657,7 +688,7 @@ function pauseGame() { if (!isPlaying()) return; G.prevState = G.state; G.state 
 function resumeGame() { if (G.state !== 'paused') return; G.state = G.prevState; showScreen(null); setPlayUI(true); }
 function togglePause() { if (G.state === 'paused') resumeGame(); else pauseGame(); }
 function toMenu() { G.state = 'menu'; G.projs.length = 0; G.bombs.length = 0; G.sums.length = 0; G.walls.length = 0; G.tempP.length = 0; setPlayUI(false); showScreen('s-menu'); }
-function refreshMenu() { const c = CLASSES[save.selected]; $('heroChip').innerHTML = `Herói atual: <b>${c.name}</b> · Nível <b>${save.levels[save.selected]}</b> · 🪙 <b>${save.coins}</b>`; }
+function refreshMenu() { ensureQuests(); updateQBadge(); const c = CLASSES[save.selected]; $('heroChip').innerHTML = `Herói atual: <b>${c.name}</b> · Nível <b>${save.levels[save.selected]}</b> · 🪙 <b>${save.coins}</b>`; }
 
 const btn = (id, fn) => $(id).addEventListener('click', () => { audio(); SFX.click(); fn(); });
 btn('bPlay', () => { $('diffHero').textContent = `${CLASSES[save.selected].name} · Nível ${save.levels[save.selected]}`; showScreen('s-diff'); });
@@ -665,6 +696,67 @@ btn('bChar', () => showScreen('s-char'));
 btn('bSet', () => showScreen('s-set'));
 btn('bShop', () => { shopHero = CKEYS.indexOf(save.selected); showScreen('s-shop'); });
 btn('bShopBack', () => showScreen('s-menu'));
+/* ---------- MISSÕES ---------- */
+const QTIER = [{ n: 'Fácil', coins: 40, col: '#3dbd6b' }, { n: 'Média', coins: 100, col: '#f2c14e' }, { n: 'Difícil', coins: 250, col: '#e5533d' }];
+const QPOOL = [
+  [{ k: 'win', goal: 2 }, { k: 'play', goal: 3 }, { k: 'dmg', goal: 400 }, { k: 'potion', goal: 2 }, { k: 'special', goal: 8 }],
+  [{ k: 'win', goal: 3 }, { k: 'win_m2', goal: 1 }, { k: 'win_nh', goal: 1 }, { k: 'special', goal: 20 }, { k: 'dmg', goal: 1500 }, { k: 'potion', goal: 4 }],
+  [{ k: 'win_hard', goal: 1 }, { k: 'win_nopot', goal: 1 }, { k: 'win_flaw', goal: 1 }, { k: 'win_m3', goal: 1 }, { k: 'win_hero', goal: 1 }]];
+function qText(q) {
+  const g = q.goal, pl = g === 1 ? '' : 's';
+  return ({ win: `Ganha ${g} partida${pl}`, play: `Joga ${g} partida${pl} até ao fim`, dmg: `Causa ${g} de dano aos inimigos`, potion: `Bebe ${g} poç${g === 1 ? 'ão' : 'ões'} em combate`, special: `Usa a habilidade especial ${g} vezes`,
+    win_m2: 'Ganha 1 partida de 2 vs 2', win_nh: 'Ganha 1 partida no Normal ou no Difícil', win_hard: 'Ganha 1 partida no Difícil', win_nopot: 'Ganha 1 partida sem beber poções',
+    win_flaw: 'Ganha 1 partida sem perderes nenhuma ronda', win_m3: 'Ganha 1 Batalha solitária (1 vs 3)', win_hero: `Ganha 1 partida com o ${CLASSES[q.hero] ? CLASSES[q.hero].name : 'herói'}` })[q.k] || q.k;
+}
+const qSlot = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + '-' + Math.floor(d.getHours() / 6); };
+let toastT = 0;
+function toast(msg, ms = 3400) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms); }
+function ensureQuests() {
+  const slot = qSlot(), Q = save.quests; if (Q && Q.slot === slot) return Q;
+  let auto = 0; if (Q) for (const q of Q.items) if (q.prog >= q.goal && !q.claimed) auto += QTIER[q.tier].coins;
+  if (auto) { save.coins += auto; }
+  const pick = a => a[Math.floor(Math.random() * a.length)], un = CKEYS.filter(isUnlocked);
+  const items = QPOOL.map((pool, tier) => { const b = pick(pool), q = { k: b.k, tier, goal: b.goal, prog: 0, claimed: false }; if (b.k === 'win_hero') q.hero = pick(un); return q; });
+  save.quests = { slot, items }; persist();
+  if (auto) setTimeout(() => toast(`⏰ As missões renovaram! Recebeste +${auto} moedas de missões concluídas que não tinhas resgatado.`, 5000), 400);
+  return save.quests;
+}
+const qReady = () => !!(save.quests && save.quests.items.some(q => q.prog >= q.goal && !q.claimed));
+function updateQBadge() { $('qBadge').classList.toggle('on', qReady()); }
+function qEvent(kind, n = 1, info = {}) {
+  if (G.autoplay) return; const Q = ensureQuests(); let changed = false;
+  for (const q of Q.items) {
+    if (q.prog >= q.goal) continue; let add = 0;
+    const k = q.k;
+    if (kind === 'dmg') { if (k === 'dmg') add = n; }
+    else if (kind === 'sp') { if (k === 'special') add = 1; }
+    else if (kind === 'pot') { if (k === 'potion') add = 1; }
+    else if (kind === 'match') { if (k === 'play') add = 1; }
+    else if (kind === 'win') {
+      if (k === 'win' || (k === 'win_m2' && info.mode === 2) || (k === 'win_m3' && info.mode === 3) || (k === 'win_nh' && info.diff !== 'easy') || (k === 'win_hard' && info.diff === 'hard')
+        || (k === 'win_nopot' && info.pots === 0) || (k === 'win_flaw' && info.flaw) || (k === 'win_hero' && info.cls === q.hero)) add = 1;
+    }
+    if (add) { q.prog = Math.min(q.goal, q.prog + add); changed = true; if (q.prog >= q.goal) { persist(); toast('✅ Missão concluída: ' + qText(q) + '\n(vai a Missões resgatar a recompensa)'); SFX.lvl(); } }
+  }
+  if (changed) updateQBadge();
+}
+function renderQuests() {
+  const Q = ensureQuests(), body = $('qBody'); body.innerHTML = '';
+  Q.items.forEach((q, i) => {
+    const T = QTIER[q.tier], done = q.prog >= q.goal, d = document.createElement('div'); d.className = 'qcard'; d.style.setProperty('--qc', T.col);
+    d.innerHTML = `<div><span class="qt">${T.n}</span><b>${qText(q)}</b><div class="qbar"><i style="width:${Math.round(q.prog / q.goal * 100)}%"></i></div><small>${Math.min(q.prog, q.goal)} / ${q.goal}</small></div><span class="qrew">🪙 ${T.coins}</span>`;
+    const b = document.createElement('button'); b.className = 'btn small' + (done && !q.claimed ? ' primary' : ''); b.disabled = q.claimed || !done;
+    b.textContent = q.claimed ? '✔ Resgatada' : done ? 'Resgatar recompensa' : 'Em curso';
+    b.addEventListener('click', () => { audio(); q.claimed = true; save.coins += T.coins; persist(); buySfx(); toast(`🎉 Resgataste a recompensa da missão! Recebeste +${T.coins} moedas`); renderQuests(); updateQBadge(); });
+    d.appendChild(b); body.appendChild(d);
+  });
+  const nx = new Date(); nx.setHours((Math.floor(nx.getHours() / 6) + 1) * 6, 0, 0, 0); const ms = nx - Date.now(), h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000) + 1;
+  $('qTimer').textContent = `Renova em ${m === 60 ? h + 1 : h}h ${String(m === 60 ? 0 : m).padStart(2, '0')}min · às 00h, 06h, 12h e 18h`;
+}
+btn('bQuests', () => showScreen('s-quests'));
+btn('bQBack', () => showScreen('s-menu'));
+setInterval(() => { if (curScreen === 's-menu') refreshMenu(); else if (curScreen === 's-quests') renderQuests(); }, 20000);
+
 btn('bResShop', () => { G.state = 'menu'; shopHero = CKEYS.indexOf(save.selected); showScreen('s-shop'); });
 btn('bQuit', () => { showScreen('s-bye'); try { window.close(); } catch (e) {} });
 btn('bCharBack', () => showScreen('s-menu'));
@@ -709,6 +801,22 @@ function shopRow(icon, title, desc, rightHtml, btnLabel, disabled, onBuy) {
   const b = document.createElement('button'); b.className = 'btn small'; b.textContent = btnLabel; b.disabled = disabled;
   if (!disabled && onBuy) b.addEventListener('click', () => { audio(); onBuy(); }); d.appendChild(b); return d;
 }
+function shopHeroSel(lab) {
+    const sel = document.createElement('div'); sel.className = 'row'; sel.style.alignItems = 'center'; sel.style.gap = '12px';
+    const mk = (t, dlt) => { const b = document.createElement('button'); b.className = 'btn small'; b.textContent = t; b.addEventListener('click', () => { audio(); SFX.click(); shopHero = (shopHero + dlt + CKEYS.length) % CKEYS.length; $('shopMsg').textContent = ''; renderShop(); }); return b; };
+    const nm = document.createElement('select'); nm.className = 'chip'; nm.style.cssText = 'font:inherit;color:#e9ecf5;background:#20253a;max-width:min(300px,60vw)';
+    CKEYS.forEach((kk, i) => { const o = document.createElement('option'); o.value = i; o.textContent = (isUnlocked(kk) ? '' : '🔒 ') + CLASSES[kk].name + ' · Nv ' + save.levels[kk] + ' · ' + lab(kk); nm.appendChild(o); });
+    nm.value = shopHero; nm.addEventListener('change', () => { audio(); shopHero = +nm.value; $('shopMsg').textContent = ''; renderShop(); });
+    sel.append(mk('◀', -1), nm, mk('▶', 1)); return sel;
+}
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+function ensureOffers() {
+  const o = save.offers; if (o && o.day === todayStr()) return o;
+  const pick = a => a[Math.floor(Math.random() * a.length)], disc = () => pick([.3, .35, .4, .45, .5]), cand = [];
+  for (const k of CKEYS.filter(isUnlocked)) { if (save.armor[k] < ARMORS.length) cand.push({ t: 'gear', w: 'arm', k }); if (save.weapon[k] < WEAPONS.length) cand.push({ t: 'gear', w: 'wpn', k }); }
+  const items = [{ t: 'pack', k: pick(POTIONS).k, d: disc() }, cand.length ? Object.assign(pick(cand), { d: disc() }) : { t: 'pack', k: pick(POTIONS).k, d: disc() }, { t: 'rare', r: pick(['gold', 'sage']) }];
+  save.offers = { day: todayStr(), items, bought: [false, false, false] }; persist(); return save.offers;
+}
 function renderShop() {
   $('shopCoins').innerHTML = `🪙 <b>${save.coins}</b> moedas`;
   document.querySelectorAll('#shopTabs [data-tab]').forEach(b => b.classList.toggle('sel', b.dataset.tab === shopTab));
@@ -721,14 +829,9 @@ function renderShop() {
       }));
     }
     $('shopMsg').textContent = $('shopMsg').textContent || 'Bebe as poções durante a luta (teclas 1–8, ou botões no telemóvel).';
-  } else {
+  } else if (shopTab === 'arm') {
     const k = CKEYS[shopHero], c = CLASSES[k], open = isUnlocked(k), own = save.armor[k];
-    const sel = document.createElement('div'); sel.className = 'row'; sel.style.alignItems = 'center'; sel.style.gap = '12px';
-    const mk = (t, dlt) => { const b = document.createElement('button'); b.className = 'btn small'; b.textContent = t; b.addEventListener('click', () => { audio(); SFX.click(); shopHero = (shopHero + dlt + CKEYS.length) % CKEYS.length; $('shopMsg').textContent = ''; renderShop(); }); return b; };
-    const nm = document.createElement('select'); nm.className = 'chip'; nm.style.cssText = 'font:inherit;color:#e9ecf5;background:#20253a;max-width:min(300px,60vw)';
-    CKEYS.forEach((kk, i) => { const o = document.createElement('option'); o.value = i; o.textContent = (isUnlocked(kk) ? '' : '🔒 ') + CLASSES[kk].name + ' · Nv ' + save.levels[kk] + ' · ' + armorLabel(kk); nm.appendChild(o); });
-    nm.value = shopHero; nm.addEventListener('change', () => { audio(); shopHero = +nm.value; $('shopMsg').textContent = ''; renderShop(); });
-    sel.append(mk('◀', -1), nm, mk('▶', 1)); body.appendChild(sel);
+    body.appendChild(shopHeroSel(armorLabel));
     ARMORS.forEach((a, i) => {
       const t = i + 1, done = t <= own, next = t === own + 1;
       const row = shopRow('<canvas width="76" height="60"></canvas>', `${a.name}${a.desc && i >= 4 ? ' ✨' : ''} · −${Math.round(a.red * 100)}% de dano`, (a.desc ? a.desc + ' · ' : 'Proteção permanente · ') + c.name,
@@ -737,6 +840,33 @@ function renderShop() {
       body.appendChild(row); shopPrev.push({ c: row.querySelector('canvas').getContext('2d'), k, t });
     });
     if (!$('shopMsg').textContent) $('shopMsg').textContent = 'A armadura é por herói. Compra por ordem: cada nova substitui a anterior.';
+  } else if (shopTab === 'wpn') {
+    const k = CKEYS[shopHero], c = CLASSES[k], open = isUnlocked(k), own = save.weapon[k];
+    body.appendChild(shopHeroSel(weaponLabel));
+    WEAPONS.forEach((w, i) => {
+      const t = i + 1, done = t <= own, next = t === own + 1;
+      body.appendChild(shopRow('🗡️', `${w.name}${w.fire ? ' ✨' : ''} · +${Math.round(w.dmg * 100)}% de dano`, wDesc(i) + ' · ' + c.name,
+        '', !open ? '🔒 Herói bloqueado' : done ? '✔ Comprada' : next ? '🪙 ' + w.price : '🔒 Compra a anterior',
+        !open || done || !next || save.coins < w.price, () => { save.coins -= w.price; save.weapon[k] = t; persist(); buySfx(); $('shopMsg').textContent = `${c.name} equipou a arma ${w.name}!`; renderShop(); }));
+    });
+    if (!$('shopMsg').textContent) $('shopMsg').textContent = 'A arma é por herói. Compra por ordem: cada nova substitui a anterior e os bónus acumulam-se.';
+  } else {
+    const O = ensureOffers();
+    O.items.forEach((it, i) => {
+      const sold = O.bought[i], pct = it.d ? Math.round(it.d * 100) : 0; let icon, title, desc, price, ok = true, lab, buy;
+      if (it.t === 'pack') {
+        const p = POTIONS.find(x => x.k === it.k); price = Math.round(p.price * 3 * (1 - it.d)); icon = p.icon; title = `3× ${p.name} · −${pct}%`; desc = `Preço normal: ${p.price * 3} 🪙 · Tens ${save.potions[p.k]}/9`;
+        ok = save.potions[p.k] < 9; lab = ok ? null : 'Cheio'; buy = () => { save.potions[p.k] = Math.min(9, save.potions[p.k] + 3); };
+      } else if (it.t === 'gear') {
+        const c = CLASSES[it.k], arm = it.w === 'arm', cur = arm ? save.armor[it.k] : save.weapon[it.k], L = arm ? ARMORS : WEAPONS;
+        if (cur >= L.length) { icon = arm ? '🛡' : '🗡️'; title = `${c.name} já tem tudo`; desc = 'Esta oferta já não é necessária'; price = 0; ok = false; lab = 'Já tens'; }
+        else { const g = L[cur]; price = Math.round(g.price * (1 - it.d)); icon = arm ? '🛡' : '🗡️'; title = `${arm ? 'Armadura' : 'Arma'} ${g.name} para ${c.name} · −${pct}%`; desc = `Preço normal: ${g.price} 🪙 · ` + (arm ? (g.desc || `−${Math.round(g.red * 100)}% de dano`) : wDesc(cur)); buy = () => { if (arm) save.armor[it.k] = cur + 1; else save.weapon[it.k] = cur + 1; }; }
+      } else {
+        const r = RARES[it.r]; price = r.price; icon = r.icon; title = `${r.name} ✨ exclusivo`; desc = `${r.desc} · Tens ${save.boost[it.r]}/3`; ok = save.boost[it.r] < 3; lab = ok ? null : 'Cheio'; buy = () => { save.boost[it.r]++; };
+      }
+      body.appendChild(shopRow(icon, title, desc, '', sold ? '✔ Comprado hoje' : lab || '🪙 ' + price, sold || !ok || save.coins < price, () => { save.coins -= price; buy(); O.bought[i] = true; persist(); buySfx(); $('shopMsg').textContent = 'Compraste: ' + title; renderShop(); }));
+    });
+    if (!$('shopMsg').textContent) $('shopMsg').textContent = 'Ofertas de hoje · renovam à meia-noite · cada uma só se compra 1× por dia.' + (save.boost.gold || save.boost.sage ? ` Tens: ${save.boost.gold ? '🏺×' + save.boost.gold + ' ' : ''}${save.boost.sage ? '📜×' + save.boost.sage : ''}` : '');
   }
 }
 // settings
@@ -751,7 +881,7 @@ $('bReset').addEventListener('click', () => {
   const b = $('bReset');
   if (!resetArm) { resetArm = 1; b.textContent = 'Tens a certeza? Clica de novo'; setTimeout(() => { resetArm = 0; b.textContent = 'Apagar progresso'; }, 3000); return; }
   resetArm = 0; b.textContent = 'Progresso apagado ✓'; setTimeout(() => { b.textContent = 'Apagar progresso'; }, 1500);
-  for (const k of CKEYS) { save.levels[k] = 1; save.armor[k] = 0; } for (const p in save.potions) save.potions[p] = 0; save.coins = 0; save.selected = 'warrior'; persist();
+  for (const k of CKEYS) { save.levels[k] = 1; save.armor[k] = 0; save.weapon[k] = 0; } save.boost = { gold: 0, sage: 0 }; save.offers = null; save.quests = null; for (const p in save.potions) save.potions[p] = 0; save.coins = 0; save.selected = 'warrior'; persist();
 });
 
 // character cards
@@ -775,6 +905,7 @@ function renderCards() {
       <div class="stat"><span>Dano</span><b>${Math.round(c.basic.dmg * m.dmg)}</b></div>
       <div class="stat"><span>Velocidade</span><b>${c.speed}</b></div>
       <div class="stat"><span>Armadura</span><b>${armorLabel(k)}</b></div>
+      <div class="stat"><span>Arma</span><b>${weaponLabel(k)}</b></div>
       <div class="stat"><span>${c.special.name}</span><b>${(c.special.cd * m.sp).toFixed(1)}s</b></div>
       <p>${c.desc}</p>` : `<p class="lockmsg">Desbloqueia com soma de níveis ${UNLOCK[k]}<br>Atual: ${progress()} / ${UNLOCK[k]}</p><p>${c.desc}</p>`);
     d.addEventListener('click', () => { audio(); if (!open) { SFX.hit(); return; } SFX.click(); save.selected = k; persist(); renderCards(); });
@@ -797,8 +928,10 @@ function hurt(t, dmg, sx, sy, kb, quiet) {
   if (t.shield > 0) { dmg *= .25; kb = 0; }
   if (t.absorb > 0) { const ab = Math.min(t.absorb, dmg); t.absorb -= ab; dmg -= ab; if (dmg < 1) { t.flash = .12; G.texts.push({ x: t.x + rnd(-8, 8), y: t.y - t.r - 8, txt: '🛡' + Math.round(ab), life: .7, col: '#8fe8ff' }); if (!quiet) SFX.hit(); return; } }
   dmg = Math.max(1, Math.round(dmg)); t.hp = Math.max(0, t.hp - dmg); t.flash = .12;
+  if (t !== G.player && G.player && t.team !== G.player.team && nearFoe(t.team, t.x, t.y) === G.player) qEvent('dmg', dmg);
   if (!quiet) {
     const at = nearFoe(t.team, t.x, t.y);
+    if (at && at.hp > 0 && at.wFire && t.hp > 0 && !(t.burn && t.burn.t > .5)) t.burn = { t: 2, dmg: 2 * at.dmgMul, tick: .5 };
     if (at && at.hp > 0 && at.buf && at.buf.vamp > 0) at.hp = Math.min(at.maxhp, at.hp + dmg * .25);
     if (t.thorns && t.hp > 0 && at && at.hp > 0 && Math.hypot(at.x - t.x, at.y - t.y) < 170) hurt(at, dmg * t.thorns, t.x, t.y, 0, true);
   }
@@ -813,18 +946,18 @@ function hurt(t, dmg, sx, sy, kb, quiet) {
 }
 function spawnProj(f, a, o) {
   G.projs.push({ x: f.x + Math.cos(a) * (f.r + 4), y: f.y + Math.sin(a) * (f.r + 4), vx: Math.cos(a) * o.speed, vy: Math.sin(a) * o.speed,
-    r: o.r, dmg: o.dmg * f.dmgMul, owner: f, type: o.type, life: o.life || 2, slow: !!o.slow, burn: !!o.burn, steal: o.steal || 0, pois: !!o.pois, home: o.home || 0, kb: o.kb || 90 });
+    r: o.r, dmg: o.dmg * f.dmgMul, owner: f, type: o.type, life: (o.life || 2) * (f.rngMul || 1), slow: !!o.slow, burn: !!o.burn, steal: o.steal || 0, pois: !!o.pois, home: o.home || 0, kb: o.kb || 90 });
 }
 function doAttack(f) {
   if (f.cdB > 0 || G.state !== 'fight' || f.hp <= 0 || f.stunT > 0) return;
-  const c = f.c, a = f.aim; f.cdB = c.basic.cd;
+  const c = f.c, a = f.aim, rg = c.basic.range * (f.rngMul || 1); f.cdB = c.basic.cd;
   if (f.cls === 'warrior') {
-    f.swing = .18; SFX.swing(); G.fx.push({ t: 'arc', x: f.x, y: f.y, a, life: .18, max: .18, range: c.basic.range, f });
+    f.swing = .18; SFX.swing(); G.fx.push({ t: 'arc', x: f.x, y: f.y, a, life: .18, max: .18, range: rg, f });
     for (const o of foes(f)) {
       const dx = o.x - f.x, dy = o.y - f.y, d = Math.hypot(dx, dy);
-      if (d < c.basic.range + o.r && Math.abs(angDiff(Math.atan2(dy, dx), a)) < c.basic.arc / 2) hurt(o, c.basic.dmg * f.dmgMul, f.x, f.y, 260);
+      if (d < rg + o.r && Math.abs(angDiff(Math.atan2(dy, dx), a)) < c.basic.arc / 2) hurt(o, c.basic.dmg * f.dmgMul, f.x, f.y, 260);
     }
-    meleeSummons(f, c.basic.range, a, c.basic.arc, c.basic.dmg * f.dmgMul);
+    meleeSummons(f, rg, a, c.basic.arc, c.basic.dmg * f.dmgMul);
   } else if (f.cls === 'mage') {
     spawnProj(f, a, { speed: c.basic.speed, r: 9, dmg: c.basic.dmg, type: 'fire' }); SFX.fire();
   } else if (f.cls === 'archer') {
@@ -832,9 +965,9 @@ function doAttack(f) {
   } else if (f.cls === 'ninja') {
     spawnProj(f, a, { speed: c.basic.speed, r: 5, dmg: c.basic.dmg, type: 'star' }); SFX.arrow();
   } else if (f.cls === 'paladin') {
-    SFX.swing(); G.fx.push({ t: 'ring', x: f.x, y: f.y, life: .25, max: .25, range: c.basic.range, col: '#ffe08a' }); G.shake = Math.max(G.shake, 3);
-    for (const o of foes(f)) if (Math.hypot(o.x - f.x, o.y - f.y) < c.basic.range + o.r) hurt(o, c.basic.dmg * f.dmgMul, f.x, f.y, 320);
-    meleeSummons(f, c.basic.range, 0, null, c.basic.dmg * f.dmgMul);
+    SFX.swing(); G.fx.push({ t: 'ring', x: f.x, y: f.y, life: .25, max: .25, range: rg, col: '#ffe08a' }); G.shake = Math.max(G.shake, 3);
+    for (const o of foes(f)) if (Math.hypot(o.x - f.x, o.y - f.y) < rg + o.r) hurt(o, c.basic.dmg * f.dmgMul, f.x, f.y, 320);
+    meleeSummons(f, rg, 0, null, c.basic.dmg * f.dmgMul);
   } else if (f.cls === 'druid') {
     spawnProj(f, a, { speed: c.basic.speed, r: 6, dmg: c.basic.dmg, type: 'thorn', slow: true }); SFX.arrow();
   } else if (f.cls === 'bomber') {
@@ -933,7 +1066,7 @@ function explode(b) {
 }
 function doSpecial(f, dirA) {
   if (f.cdS > 0 || G.state !== 'fight' || f.hp <= 0 || f.stunT > 0) return false;
-  f.cdS = f.spCd;
+  f.cdS = f.spCd; if (f === G.player) qEvent('sp');
   if (f.cls === 'warrior') { f.dashT = .22; f.dashA = f.aim; f.dashHit = false; f.dashSpd = 720; f.dashDmg = f.c.special.dmg; f.dashFx = null; SFX.dash(); }
   else if (f.cls === 'mage') {
     burst(f.x, f.y, '#b9c2ff', 16, 220, 4);
@@ -1094,7 +1227,7 @@ function barrier(f, len = 120, life = 2) { G.walls.push({ x: f.x + Math.cos(f.ai
 function drinkIdx(i) {
   const p = POTIONS[i]; if (!p || G.state !== 'fight' || G.autoplay) return;
   const f = G.player; if (f.hp <= 0 || save.potions[p.k] <= 0) return;
-  save.potions[p.k]--; persist(); f.buf[p.k] = p.dur; if (p.k === 'ward') f.absorb = 40;
+  save.potions[p.k]--; persist(); G.potUsed = (G.potUsed || 0) + 1; qEvent('pot'); f.buf[p.k] = p.dur; if (p.k === 'ward') f.absorb = 40;
   tone(520, .12, 'triangle', .14, 400); tone(780, .18, 'triangle', .12, 300, .1);
   G.texts.push({ x: f.x, y: f.y - f.r - 24 - 18 * Object.values(f.buf).filter(v => v > 0).length, txt: p.icon + ' ' + p.name, life: 1.1, col: '#ffe08a' }); burst(f.x, f.y, '#ffe08a', 14, 200, 3);
 }
@@ -1106,7 +1239,7 @@ function endRound(team) {
   if (team === 0) SFX.win(); else SFX.lose();
 }
 function endMatch() {
-  G.state = 'matchEnd'; G.spec = false; setPlayUI(false); $('pauseBtn').classList.remove('on');
+  G.state = 'matchEnd'; G.spec = false; setPlayUI(false); { const w0 = G.mode === 3 ? G.player.wins >= 1 : G.player.wins >= 2; qEvent('match'); if (w0) qEvent('win', 1, { mode: G.mode, diff: G.diff, cls: save.selected, pots: G.potUsed | 0, flaw: G.mode === 3 || G.tw[1] === 0 }); persist(); } $('pauseBtn').classList.remove('on');
   const won = G.mode === 3 ? G.player.wins >= 1 : G.player.wins >= 2, cls = save.selected, D = DIFF[G.diff], r = $('result');
   $('resTitle').textContent = won ? (G.mode === 3 ? 'ÚLTIMO SOBREVIVENTE!' : 'VITÓRIA!') : (G.mode === 3 ? 'ELIMINADO' : 'DERROTA'); $('resTitle').className = 'big ' + (won ? 'win' : 'lose');
   const two = G.mode === 2, coins = D.coins * (G.mode >= 2 ? 2 : 1);
@@ -1116,7 +1249,8 @@ function endMatch() {
   let msg = '';
   if (won) {
     const before = Object.keys(UNLOCK).filter(isUnlocked), old = save.levels[cls];
-    let pts = (save.pts[cls] || 0) + D.gain, nw = old;
+    const sage = save.boost.sage > 0; if (sage) save.boost.sage--; G.lastSage = sage;
+    let pts = (save.pts[cls] || 0) + D.gain + (sage ? 1 : 0), nw = old;
     while (pts >= 3 && nw < 10) { pts -= 3; nw++; }
     if (nw >= 10) pts = 0;
     save.pts[cls] = pts; persist();
@@ -1126,7 +1260,8 @@ function endMatch() {
     else if (old >= 10) msg = `${CLASSES[cls].name} já está no nível máximo (10).`;
     else msg = `${CLASSES[cls].name}: ${pts}/3 para o próximo nível (nível ${old})`;
   } else msg = 'Sem subida de nível desta vez. Tenta outra vez!';
-  if (won) { const bonus = G.rndArena ? 10 : 0; save.coins += coins + bonus; persist(); msg += '\n🪙 +' + (coins + bonus) + ' moedas' + (bonus ? ` (${coins} + ${bonus} da arena aleatória)` : '') + ' (saldo: ' + save.coins + ')'; }
+  if (won) { const bonus = G.rndArena ? 10 : 0, gold = save.boost.gold > 0; if (gold) save.boost.gold--; const tot = (coins + bonus) * (gold ? 2 : 1); save.coins += tot; persist();
+    msg += '\n🪙 +' + tot + ' moedas' + (bonus || gold ? ` (${coins}${bonus ? ' + ' + bonus + ' da arena aleatória' : ''}${gold ? ' · ×2 Poção Dourada' : ''})` : '') + ' (saldo: ' + save.coins + ')'; if (G.lastSage) msg += '\n📜 Pergaminho do Sábio: +1 ponto de nível!'; }
   $('resLvl').innerHTML = msg.replace(/\n/g, '<br>');
   showScreen('result');
 }
@@ -1815,10 +1950,55 @@ function render() {
 }
 
 /* ---------- LOOP ---------- */
+
+/* ---------- ANIMAÇÃO DO ARQUEIRO (botão Missões) ---------- */
+const QA_T = 4.4;
+function drawQuestAnim(c, tt) {
+  const t = tt % QA_T, ez = x => x * x * (3 - 2 * x), cl = (x, a, b) => Math.max(0, Math.min(1, (x - a) / (b - a)));
+  const pull = ez(cl(t, 0.15, 1.0)), rel = t >= 1.0, fl = cl(t, 1.0, 1.4), hit = t >= 1.4, celeb = hit && t < 3.9;
+  const ph = (t - 1.55) * 7, jump = celeb ? Math.abs(Math.sin(ph)) * 7 : 0, sq = celeb ? 1 - .14 * Math.max(0, Math.cos(ph * 2)) * (jump < 1.5 ? 1 : 0) : 1;
+  const AC = CLASSES.archer, R = AC.r, k = .42, bx = 13, by = 29.5, ty = by, tx = 58;
+  c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+  // chão
+  c.strokeStyle = '#3a4266'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(2, 37.7); c.lineTo(68, 37.7); c.stroke();
+  // alvo
+  const wob = hit && t < 2.2 ? Math.sin((t - 1.4) * 38) * Math.exp(-(t - 1.4) * 4) * .14 : 0;
+  c.strokeStyle = '#7a5530'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(tx - 2, ty + 5); c.lineTo(tx - 5, 37.5); c.moveTo(tx + 2, ty + 5); c.lineTo(tx + 5, 37.5); c.stroke();
+  c.save(); c.translate(tx, ty); c.scale(1 + wob, 1 + wob);
+  [[8, '#f2f2f2'], [6.4, '#e5533d'], [4.6, '#f2f2f2'], [3, '#e5533d'], [1.3, '#f2c14e']].forEach(([r, col]) => { c.fillStyle = col; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); });
+  c.strokeStyle = '#333'; c.lineWidth = .6; c.beginPath(); c.arc(0, 0, 8, 0, 7); c.stroke(); c.restore();
+  // ---- o arqueiro do jogo (mesmo corpo, cor, capa, olhos e arco) ----
+  c.save(); c.translate(bx, by + 7 * (1 - sq) * .5 - jump); c.scale(k, k * sq);
+  const BR = 22, tipx = R - 14 + BR * Math.cos(1.05), tipy = BR * Math.sin(1.05), sx = rel ? tipx : tipx - pull * (tipx - (R - 14)), sway = celeb ? Math.sin(ph) * .25 : 0;
+  c.save(); c.rotate(sway);
+  c.strokeStyle = '#7a5530'; c.lineWidth = 4; c.beginPath(); c.arc(R - 14, 0, BR, -1.05, 1.05); c.stroke();                                  // arco
+  c.strokeStyle = '#ddd'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(tipx, -tipy); c.lineTo(sx, 0); c.lineTo(tipx, tipy); c.stroke();           // corda
+  if (!rel) { c.strokeStyle = '#e8e2c8'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(sx, 0); c.lineTo(sx + 34, 0); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.moveTo(sx + 40, 0); c.lineTo(sx + 33, -4); c.lineTo(sx + 33, 4); c.fill(); }
+  c.restore();
+  c.fillStyle = AC.color; c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 3; c.beginPath(); c.arc(0, 0, R, 0, 7); c.fill(); c.stroke();                // corpo
+  c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.arc(-R * .25, -R * .3, R * .55, 0, 7); c.fill();
+  c.fillStyle = 'rgba(0,50,20,.55)'; c.beginPath(); c.arc(-R * .2, 0, R * .85, Math.PI * .55, Math.PI * 1.45); c.fill();                          // capa
+  if (celeb) { c.strokeStyle = '#111'; c.lineWidth = 2.4; for (const ex of [R * .12, R * .6]) { c.beginPath(); c.arc(ex, -R * .15, 3.4, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); } c.lineWidth = 2; c.beginPath(); c.arc(R * .36, R * .12, 5, .25, Math.PI - .25); c.stroke(); }   // olhos felizes + sorriso
+  else { for (const ex of [R * .12, R * .6]) { c.fillStyle = '#fff'; c.beginPath(); c.arc(ex, -R * .2, 3.8, 0, 7); c.fill(); c.fillStyle = '#111'; c.beginPath(); c.arc(ex + 1.2, -R * .2, 1.9, 0, 7); c.fill(); } }
+  c.restore();
+  // flecha a voar / espetada
+  if (rel) { const e = fl, x0 = bx + (R - 14) * k + 30 * e, xx = hit ? 43 : x0, yy = ty - (hit ? 0 : 2.2 * Math.sin(e * Math.PI) * (1 - e) * 2), L = 34 * k;
+    c.strokeStyle = '#e8e2c8'; c.lineWidth = 1.1; c.beginPath(); c.moveTo(xx, yy); c.lineTo(xx + L, yy); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.moveTo(xx + L + 2.6, yy); c.lineTo(xx + L - .4, yy - 1.7); c.lineTo(xx + L - .4, yy + 1.7); c.fill(); }
+  // faíscas no impacto + confetis
+  if (hit && t < 1.9) { const q = (t - 1.4) / .5; c.strokeStyle = `rgba(255,224,122,${1 - q})`; c.lineWidth = 1; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; c.beginPath(); c.moveTo(tx + Math.cos(a) * (9 + q * 2), ty + Math.sin(a) * (9 + q * 2)); c.lineTo(tx + Math.cos(a) * (12 + q * 6), ty + Math.sin(a) * (12 + q * 6)); c.stroke(); } }
+  if (hit && t < 3.9) { const q = t - 1.45, cols = ['#f2c14e', '#e5533d', '#6a7cff', '#3dbd6b', '#ff7bd5'];
+    for (let i = 0; i < 16; i++) { const a = -Math.PI * (.15 + .7 * ((i * 37) % 16) / 16), v = 14 + (i * 53) % 20, x = tx - 6 + Math.cos(a) * v * q * 1.1 - ((i * 7) % 5) * q * 2, y = ty - 6 + Math.sin(a) * v * q + 16 * q * q;
+      if (y > 36 || q < 0) continue; c.save(); c.translate(x, y); c.rotate(q * 6 + i); c.globalAlpha = 1 - cl(t, 3.3, 3.9); c.fillStyle = cols[i % 5]; c.fillRect(-1, -.6, 2, 1.2); c.restore(); } }
+  c.restore();
+}
+function tickQuestAnim(now) {
+  if ($('s-menu').classList.contains('hidden')) return;
+  const cv = $('qAnim'), c = cv.getContext('2d'); c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, 72, 40); drawQuestAnim(c, now / 1000);
+}
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
-  update(dt);
+  update(dt); tickQuestAnim(now);
   if (!$('s-char').classList.contains('hidden')) {
     const t = now / 1000;
     for (const pv of previews) { pv.c.setTransform(1, 0, 0, 1, 0, 0); pv.c.clearRect(0, 0, 160, 120); pv.c.setTransform(1.45, 0, 0, 1.45, 0, 0); drawFighter(pv.c, { armT: save.armor[pv.k], x: 36, y: 40, r: CLASSES[pv.k].r, cls: pv.k, aim: Math.sin(t * 1.5) * .5, flash: 0, swing: pv.k === 'warrior' && Math.sin(t * 3) > .9 ? .1 : 0 }, t); }
@@ -1833,7 +2013,7 @@ showScreen('s-menu'); syncSettings();
 requestAnimationFrame(frame);
 
 // debug / test hooks
-window.__dbg = { MUS, musicTick, foes, opp, doSpecial, doAttack, aiThink, ALL, drinkIdx, POTIONS, ARMORS, renderShop, G, setArena, ARENAS, update, startMatch, DIFF, CLASSES, save, CKEYS, mkFighter, resetRound, endMatch, keys };
+window.__dbg = { drawQuestAnim, MUS, musicTick, foes, opp, doSpecial, doAttack, aiThink, ALL, drinkIdx, POTIONS, ARMORS, renderShop, G, setArena, ARENAS, update, startMatch, DIFF, CLASSES, save, CKEYS, mkFighter, resetRound, endMatch, keys };
 })();
 </script>
 </body>
