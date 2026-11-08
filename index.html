@@ -569,7 +569,7 @@ function resetRound() {
   G.state = 'countdown'; G.cd = 2.6; G.lastNum = 0; G.fightT = 0; G.sdT = 0; G.hole = null; if (ARENA.hole) holeReset(); G.winner = null; wantSp = false; G.spec = false; $('bSkip').classList.remove('on');
 }
 function startMatch(diff) {
-  G.diff = diff; G.mode = save.mode === 2 ? 2 : save.mode === 3 ? 3 : 1; G.tw = [0, 0, 0, 0]; const D = DIFF[diff], BL = diff === 'normal' ? save.levels[save.selected] : D.botLvl;
+  G.rndArena = save.arena === 'random'; G.diff = diff; G.mode = save.mode === 2 ? 2 : save.mode === 3 ? 3 : 1; G.tw = [0, 0, 0, 0]; const D = DIFF[diff], BL = diff === 'normal' ? save.levels[save.selected] : D.botLvl;
   { const ks = Object.keys(ARENAS); setArena(save.arena === 'random' ? ks[Math.floor(Math.random() * ks.length)] : save.arena); }
   const others = CKEYS.filter(k => k !== save.selected);
   for (let i = others.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [others[i], others[j]] = [others[j], others[i]]; }
@@ -688,7 +688,7 @@ function renderModeRow() {
     b.addEventListener('click', () => { audio(); SFX.click(); save.mode = m; persist(); renderModeRow(); });
     row.appendChild(b);
   }
-  for (const k of Object.keys(DIFF)) { const D = DIFF[k], two = save.mode >= 2; document.querySelector(`[data-diff=${k}] small`).textContent = `${DTXT[k][two ? 1 : 0]} · +${D.gain}/3 de nível · +${save.mode === 3 ? 60 : Math.round(D.coins * (save.mode === 2 ? 2 : 1))} 🪙`; }
+  for (const k of Object.keys(DIFF)) { const D = DIFF[k], two = save.mode >= 2; document.querySelector(`[data-diff=${k}] small`).textContent = `${DTXT[k][two ? 1 : 0]} · +${D.gain}/3 de nível · +${D.coins * (save.mode >= 2 ? 2 : 1)} 🪙`; }
 }
 function renderArenaRow() {
   const row = $('arenaRow'); row.innerHTML = '';
@@ -1109,7 +1109,7 @@ function endMatch() {
   G.state = 'matchEnd'; G.spec = false; setPlayUI(false); $('pauseBtn').classList.remove('on');
   const won = G.mode === 3 ? G.player.wins >= 1 : G.player.wins >= 2, cls = save.selected, D = DIFF[G.diff], r = $('result');
   $('resTitle').textContent = won ? (G.mode === 3 ? 'ÚLTIMO SOBREVIVENTE!' : 'VITÓRIA!') : (G.mode === 3 ? 'ELIMINADO' : 'DERROTA'); $('resTitle').className = 'big ' + (won ? 'win' : 'lose');
-  const two = G.mode === 2, coins = G.mode === 3 ? 60 : Math.round(D.coins * (G.mode === 2 ? 2 : 1));
+  const two = G.mode === 2, coins = D.coins * (G.mode >= 2 ? 2 : 1);
   const names = two ? `${CLASSES[cls].name} + ${CLASSES[G.allyCls].name} vs ${CLASSES[G.botCls].name} + ${CLASSES[G.botCls2].name}` : `${CLASSES[cls].name} vs ${CLASSES[G.botCls].name}`;
   $('resSub').textContent = G.mode === 3 ? `${CLASSES[cls].name} vs ${CLASSES[G.botCls].name}, ${CLASSES[G.allyCls].name} e ${CLASSES[G.botCls2].name} (Batalha solitária · ${D.label}, ${ARENA.name})`
     : `${names} (${two ? '2vs2 · ' : ''}${D.label}, ${ARENA.name}) · ${G.player.wins}–${G.bot.wins}`;
@@ -1126,7 +1126,7 @@ function endMatch() {
     else if (old >= 10) msg = `${CLASSES[cls].name} já está no nível máximo (10).`;
     else msg = `${CLASSES[cls].name}: ${pts}/3 para o próximo nível (nível ${old})`;
   } else msg = 'Sem subida de nível desta vez. Tenta outra vez!';
-  if (won) { save.coins += coins; persist(); msg += '\n🪙 +' + coins + ' moedas (saldo: ' + save.coins + ')'; }
+  if (won) { const bonus = G.rndArena ? 10 : 0; save.coins += coins + bonus; persist(); msg += '\n🪙 +' + (coins + bonus) + ' moedas' + (bonus ? ` (${coins} + ${bonus} da arena aleatória)` : '') + ' (saldo: ' + save.coins + ')'; }
   $('resLvl').innerHTML = msg.replace(/\n/g, '<br>');
   showScreen('result');
 }
