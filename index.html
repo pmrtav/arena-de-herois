@@ -62,6 +62,7 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
 #result .win{color:var(--gold)}#result .lose{color:#ff7a66}
 .lvlup{color:var(--green);font-weight:700;font-size:clamp(18px,3vw,26px);text-align:center}
 .hint{font-size:13px;color:var(--mute);text-align:center;max-width:520px}
+.langsw{display:flex;gap:6px}.langsw .btn.small{padding:6px 12px;min-width:0}.langsw .btn.sel{outline:2px solid var(--gold);color:var(--gold)}
 .portraithint{display:none}
 @media (orientation:portrait) and (pointer:coarse){.portraithint{display:block}}
 
@@ -166,6 +167,7 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
   <div class="setrow"><label for="setRp">Repetição em câmara lenta no fim da ronda</label><input type="checkbox" id="setRp"></div>
   <div class="setrow"><label for="setSfx">Efeitos sonoros</label><input type="checkbox" id="setSfx"></div>
   <div class="setrow"><label for="setTouch">Controlos touch</label><input type="checkbox" id="setTouch"></div>
+  <div class="setrow"><label>Idioma</label><span class="langsw"><button class="btn small" id="langPt" data-lang="pt">Português</button><button class="btn small" id="langEn" data-lang="en">English</button></span></div>
   <button class="btn danger small" id="bReset">Apagar progresso</button>
   <button class="btn" id="bSetBack">← Voltar</button>
 </div>
@@ -236,6 +238,263 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
 <script>
 (() => {
 'use strict';
+/* ---------- I18N (PT <-> EN) ---------- */
+// Língua guardada em settings.lang ('pt' | 'en'). Em PT nada muda; em EN todo o texto passa por T().
+const LANG = (() => { try { const s = JSON.parse(localStorage.getItem('arena-herois-v1') || '{}'); return s.settings && s.settings.lang === 'pt' ? 'pt' : 'en'; } catch (e) { return 'en'; } })();
+const I18N_PH = [
+  // ---- heróis (nome · especial · descrição) ----
+  ['Guerreiro', 'Warrior'], ['Investida', 'Charge'], ['Corpo a corpo brutal. Investida: avança e atropela o inimigo.', 'Brutal melee. Charge: rushes forward and tramples the enemy.'],
+  ['Mago', 'Mage'], ['Teleporte', 'Teleport'], ['Bolas de fogo poderosas. Teleporte: salta para longe do perigo.', 'Powerful fireballs. Teleport: jumps away from danger.'],
+  ['Arqueiro', 'Archer'], ['Rajada', 'Barrage'], ['Rápido e ágil. Rajada: dispara 5 flechas em leque.', 'Fast and agile. Barrage: fires 5 arrows in a fan.'],
+  ['Ninja', 'Ninja'], ['Passo sombra', 'Shadow step'], ['Velocíssimo e frágil. Passo sombra: esquiva curta e invulnerável.', 'Blazing fast and fragile. Shadow step: a short invulnerable dodge.'],
+  ['Paladino', 'Paladin'], ['Escudo', 'Shield'], ['Tanque lento. Martelo em área e escudo que corta 75% do dano.', 'Slow tank. Area hammer and a shield that cuts 75% of damage.'],
+  ['Druida', 'Druid'], ['Cura', 'Heal'], ['Espinhos que abrandam o inimigo. Cura 35% da vida em 3 segundos.', 'Thorns that slow the enemy. Heals 35% of health over 3 seconds.'],
+  ['Bombardeiro', 'Bomber'], ['Bomba', 'Bomb'], ['Lança minas que explodem ao contacto e uma bomba grande com atraso.', 'Throws mines that explode on contact and a big delayed bomb.'],
+  ['Piromante', 'Pyromancer'], ['Anel de chamas', 'Ring of flames'], ['Brasas que queimam durante 3s. Anel de chamas: explosão à volta que incendeia.', 'Embers that burn for 3s. Ring of flames: an explosion around you that ignites.'],
+  ['Criomante', 'Cryomancer'], ['Congelar', 'Freeze'], ['Estilhaços que abrandam. Congelar: prende quem estiver perto durante 1,5s.', 'Shards that slow. Freeze: traps anyone nearby for 1.5s.'],
+  ['Eletromante', 'Electromancer'], ['Investida elétrica', 'Electric charge'], ['Relâmpago instantâneo que salta para invocações. Investida que atordoa.', 'Instant lightning that jumps to summons. A charge that stuns.'],
+  ['Necromante', 'Necromancer'], ['Esqueleto', 'Skeleton'], ['Raios que roubam 20% do dano como vida. Invoca um esqueleto durante 6s.', 'Rays that steal 20% of damage as health. Summons a skeleton for 6s.'],
+  ['Ilusionista', 'Illusionist'], ['Clone', 'Clone'], ['Leque de 3 cartas. Clone-isca que o bot persegue durante 4s.', 'Fan of 3 cards. A decoy clone the bot chases for 4s.'],
+  ['Feiticeiro das Sombras', 'Shadow Sorcerer'], ['Passo atrás', 'Step behind'], ['Orbe sombria que persegue o alvo. Teleporta-se para as costas do inimigo.', 'Dark orb that chases the target. Teleports behind the enemy.'],
+  ['Mago Arcano', 'Arcane Mage'], ['Barreira', 'Barrier'], ['Rajada de 3 mísseis. Barreira arcana que bloqueia projéteis durante 2s.', 'Barrage of 3 missiles. An arcane barrier that blocks projectiles for 2s.'],
+  ['Bruxo do Vento', 'Wind Warlock'], ['Tornado', 'Tornado'], ['Rajadas que empurram. Tornado: puxa o inimigo para ti durante 1s.', 'Gusts that push. Tornado: pulls the enemy toward you for 1s.'],
+  ['Geomante', 'Geomancer'], ['Pilar de pedra', 'Stone pillar'], ['Pedregulhos lentos e pesados. Ergue um pilar de pedra durante 5s.', 'Slow, heavy boulders. Raises a stone pillar for 5s.'],
+  ['Cronomante', 'Chronomancer'], ['Rebobinar', 'Rewind'], ['Projéteis que abrandam o tempo. Rebobina posição e vida de 3s atrás e limpa efeitos.', 'Projectiles that slow time. Rewinds position and health to 3s ago and clears effects.'],
+  ['Lanceiro', 'Lancer'], ['Arremesso', 'Throw'], ['Estocadas com alcance longo e estreito. Arremesso: atira a lança em linha reta.', 'Long, narrow thrusts. Throw: hurls the spear in a straight line.'],
+  ['Berserker', 'Berserker'], ['Fúria', 'Fury'], ['Machado que varre à volta. Fúria: +50% dano e +40% velocidade durante 4s.', 'Axe that sweeps around. Fury: +50% damage and +40% speed for 4s.'],
+  ['Duelista', 'Duelist'], ['Guarda', 'Guard'], ['Florete rápido. Guarda: durante 1,2s reflete os projéteis de volta.', 'Quick rapier. Guard: for 1.2s reflects projectiles back.'],
+  ['Besteiro', 'Crossbowman'], ['Armadilha', 'Trap'], ['Virotes lentos e fortes. Armadilha: prende quem a pisar durante 1,6s.', 'Slow, strong bolts. Trap: snares whoever steps on it for 1.6s.'],
+  ['Franco-atirador', 'Sniper'], ['Recuo', 'Retreat'], ['Tiro instantâneo de longo alcance. Recuo: salta para trás.', 'Instant long-range shot. Retreat: jumps backwards.'],
+  ['Pistoleiro', 'Gunslinger'], ['Leque de balas', 'Bullet fan'], ['Tiros rápidos e precisos. Leque de balas: 7 tiros em cone.', 'Fast, accurate shots. Bullet fan: 7 shots in a cone.'],
+  ['Legionário', 'Legionary'], ['Muralha', 'Rampart'], ['Tanque com escudo: empurrão forte. Muralha: ergue um muro que bloqueia projéteis inimigos.', 'Shielded tank: strong shove. Rampart: raises a wall that blocks enemy projectiles.'],
+  ['Mestre das Correntes', 'Chain Master'], ['Gancho', 'Hook'], ['Chicote de alcance médio. Gancho: puxa o inimigo e atordoa 0,5s.', 'Medium-range whip. Hook: pulls the enemy and stuns for 0.5s.'],
+  ['Lançador de Facas', 'Knife Thrower'], ['Chuva de facas', 'Knife rain'], ['Duas facas por lançamento. Chuva de facas: 12 facas em todas as direções.', 'Two knives per throw. Knife rain: 12 knives in every direction.'],
+  ['Samurai', 'Samurai'], ['Iaijutsu', 'Iaijutsu'], ['Katana veloz. Iaijutsu: corte relâmpago invulnerável que atravessa o inimigo.', 'Swift katana. Iaijutsu: an invulnerable lightning slash that cuts through the enemy.'],
+  ['Lobo', 'Wolf'], ['Matilha', 'Pack'], ['Mordidelas rápidas e muito veloz. Matilha: chama 2 lobos pequenos que perseguem o inimigo.', 'Quick bites and very fast. Pack: calls 2 small wolves that chase the enemy.'],
+  ['Urso', 'Bear'], ['Rugido', 'Roar'], ['Tanque de patadas pesadas. Rugido: atordoa 0,9s quem estiver perto.', 'Tank with heavy swipes. Roar: stuns anyone nearby for 0.9s.'],
+  ['Víbora', 'Viper'], ['Bote', 'Strike'], ['Dardos venenosos (dano ao longo de 4s). Bote: investida que envenena.', 'Poison darts (damage over 4s). Strike: a lunge that poisons.'],
+  ['Aranha', 'Spider'], ['Teias', 'Webs'], ['Teias que abrandam. Teias: planta 3 armadilhas à frente que prendem 1,3s.', 'Webs that slow. Webs: plants 3 traps ahead that snare for 1.3s.'],
+  ['Ent', 'Ent'], ['Raízes', 'Roots'], ['Lento e muito forte. Raízes: prende o alvo à frente durante 1,7s.', 'Slow and very strong. Roots: pins the target ahead for 1.7s.'],
+  ['Falcão', 'Falcon'], ['Grito', 'Screech'], ['Penas que perseguem o alvo. Grito: abranda todos os que estiverem à volta.', 'Feathers that chase the target. Screech: slows everyone around.'],
+  ['Apicultor', 'Beekeeper'], ['Enxame', 'Swarm'], ['Mel que abranda. Enxame: 6 abelhas que perseguem o inimigo.', 'Honey that slows. Swarm: 6 bees that chase the enemy.'],
+  ['Xamã', 'Shaman'], ['Totem', 'Totem'], ['Espíritos que atacam à distância. Totem: dispara sozinho contra o inimigo durante 8s.', 'Spirits that attack from afar. Totem: fires on its own at the enemy for 8s.'],
+  ['Javali', 'Boar'], ['Investida selvagem', 'Wild charge'], ['Presas rápidas. Investida selvagem: atropela e atordoa o inimigo.', 'Quick tusks. Wild charge: tramples and stuns the enemy.'],
+  ['Ninfa', 'Nymph'], ['Onda', 'Wave'], ['Gotas de água. Onda: empurra com força quem estiver perto.', 'Water drops. Wave: shoves anyone nearby with force.'],
+  ['Ceifeiro', 'Reaper'], ['Colheita', 'Harvest'], ['Gadanha em arco largo. Colheita: explosão que rouba 50% do dano como vida.', 'Scythe in a wide arc. Harvest: a blast that steals 50% of damage as health.'],
+  ['Vampiro', 'Vampire'], ['Forma de névoa', 'Mist form'], ['Mordidas que roubam 35% do dano. Forma de névoa: investida invulnerável.', 'Bites that steal 35% of damage. Mist form: an invulnerable charge.'],
+  ['Clérigo', 'Cleric'], ['Luz sagrada', 'Holy light'], ['Raios sagrados. Luz sagrada: explosão à volta e cura 15% da vida.', 'Holy rays. Holy light: a blast around you that heals 15% of health.'],
+  ['Anjo', 'Angel'], ['Julgamento', 'Judgment'], ['Feixe de luz instantâneo. Julgamento: marca o inimigo e a luz cai 0,9s depois.', 'Instant beam of light. Judgment: marks the enemy and the light strikes 0.9s later.'],
+  ['Demónio', 'Demon'], ['Pacto', 'Pact'], ['Chamas infernais que queimam. Pacto: sacrifica 12% da vida por +50% de dano durante 5s.', 'Hellfire that burns. Pact: sacrifices 12% of health for +50% damage for 5s.'],
+  ['Bruxa', 'Witch'], ['Maldição', 'Curse'], ['Feitiços que abrandam. Maldição: o alvo leva +30% de dano durante 6s.', 'Spells that slow. Curse: the target takes +30% damage for 6s.'],
+  ['Monge', 'Monk'], ['Onda de chi', 'Chi wave'], ['Socos rapidíssimos. Onda de chi: projétil largo que empurra.', 'Lightning-fast punches. Chi wave: a wide projectile that pushes.'],
+  ['Templário', 'Templar'], ['Cruzada', 'Crusade'], ['Espada sagrada. Cruzada: investida protegida por escudo durante 1,5s.', 'Holy sword. Crusade: a charge protected by a shield for 1.5s.'],
+  ['Fantasma', 'Ghost'], ['Intangível', 'Intangible'], ['Almas que perseguem o alvo. Intangível: invulnerável 1s e mais rápido.', 'Souls that chase the target. Intangible: invulnerable for 1s and faster.'],
+  ['Cavaleiro Negro', 'Dark Knight'], ['Aura de trevas', 'Aura of darkness'], ['Espadão pesado. Aura de trevas: 3s a ferir e abrandar quem se aproxima.', 'Heavy greatsword. Aura of darkness: for 3s hurts and slows anyone who comes close.'],
+  // ---- heróis armas (20) ----
+  ['Gladiador', 'Gladiator'], ['Investida atordoante', 'Stunning charge'], ['Espada larga em arco amplo.', 'Broadsword in a wide arc.'], ['Investida atordoante: corre e atordoa quem apanhar.', 'Stunning charge: runs and stuns whoever it catches.'],
+  ['Machadeiro', 'Axeman'], ['Giro de machado', 'Axe spin'], ['Golpes lentos e pesadíssimos.', 'Slow, extremely heavy blows.'], ['Giro de machado: onda à volta que empurra todos.', 'Axe spin: a shockwave around you that shoves everyone.'],
+  ['Mosqueteiro', 'Musketeer'], ['Recuo tático', 'Tactical retreat'], ['Tiro único, rápido e forte.', 'Single shot, fast and strong.'], ['Recuo tático: salta para trás, invulnerável por instantes.', 'Tactical retreat: jumps backwards, briefly invulnerable.'],
+  ['Caçador', 'Hunter'], ['Armadilha de rede', 'Net trap'], ['Flechas que abrandam a presa.', 'Arrows that slow the prey.'], ['Armadilha de rede: prende o inimigo no sítio.', 'Net trap: pins the enemy in place.'],
+  ['Pirata', 'Pirate'], ['Abordagem', 'Boarding'], ['Bacamarte: três balas em leque, curto alcance.', 'Blunderbuss: three bullets in a fan, short range.'], ['Abordagem: salta sobre o inimigo.', 'Boarding: leaps onto the enemy.'],
+  ['Cavaleiro', 'Knight'], ['Guarda de ferro', 'Iron guard'], ['Espada e armadura pesada.', 'Sword and heavy armor.'], ['Guarda de ferro: ergue o escudo e bloqueia dano.', 'Iron guard: raises the shield and blocks damage.'],
+  ['Mercenário', 'Mercenary'], ['Pagamento a dobrar', 'Double pay'], ['Golpes rápidos e seguros.', 'Quick, reliable strikes.'], ['Pagamento a dobrar: fúria, mais dano durante 4 s.', 'Double pay: fury, extra damage for 4 s.'],
+  ['Atirador de Machados', 'Axe Thrower'], ['Chuva de machados', 'Axe rain'], ['Machados que atravessam o alvo.', 'Axes that pierce through the target.'], ['Chuva de machados: leque de três machados.', 'Axe rain: a fan of three axes.'],
+  ['Pugilista', 'Boxer'], ['Gancho de direita', 'Right hook'], ['Socos muito rápidos de curto alcance.', 'Very fast short-range punches.'], ['Gancho de direita: avanço que atordoa.', 'Right hook: an advance that stuns.'],
+  ['Mestre de Armas', 'Weapon Master'], ['Postura veloz', 'Swift stance'], ['Domina qualquer lâmina: golpes rápidos.', 'Masters any blade: quick strikes.'], ['Postura veloz: move-se muito mais depressa.', 'Swift stance: moves much faster.'],
+  ['Cavaleiro Montado', 'Mounted Knight'], ['Carga', 'Cavalry charge'], ['Lança longa, estocadas de longe.', 'Long lance, thrusts from afar.'], ['Carga: galope devastador contra o inimigo.', 'Cavalry charge: a devastating gallop at the enemy.'],
+  ['Retiário', 'Retiarius'], ['Rede', 'Net'], ['Tridente de longo alcance.', 'Long-reach trident.'], ['Rede: lança uma rede que imobiliza.', 'Net: throws a net that immobilizes.'],
+  ['Arcabuzeiro', 'Arquebusier'], ['Explosão de pólvora', 'Powder blast'], ['Tiro lentíssimo mas devastador.', 'Very slow but devastating shot.'], ['Explosão de pólvora: atira longe quem estiver perto.', 'Powder blast: sends anyone nearby flying.'],
+  ['Fundibulário', 'Slinger'], ['Pedras em círculo', 'Ring of stones'], ['Pedras rápidas com a funda.', 'Quick stones from the sling.'], ['Pedras em círculo: dispara em todas as direções.', 'Ring of stones: fires in every direction.'],
+  ['Esgrimista', 'Fencer'], ['Esquiva elegante', 'Elegant dodge'], ['Estocadas rapidíssimas e precisas.', 'Lightning-fast, precise thrusts.'], ['Esquiva elegante: salta para trás sem ser atingido.', 'Elegant dodge: leaps back without getting hit.'],
+  ['Mestre do Bastão', 'Staff Master'], ['Varrimento', 'Sweep'], ['Bastão que empurra o adversário.', 'Staff that shoves the opponent.'], ['Varrimento: onda que afasta todos para longe.', 'Sweep: a wave that pushes everyone far away.'],
+  ['Ladrão', 'Thief'], ['Capa de sombras', 'Shadow cloak'], ['Facadas rápidas de muito perto.', 'Quick stabs from very close.'], ['Capa de sombras: fica quase invisível durante 3 s.', 'Shadow cloak: becomes almost invisible for 3 s.'],
+  ['Assassino', 'Assassin'], ['Golpe fatal', 'Fatal strike'], ['Lâminas gémeas, golpes certeiros.', 'Twin blades, deadly strikes.'], ['Golpe fatal: avanço invisível com dano enorme.', 'Fatal strike: an invisible lunge with huge damage.'],
+  ['Engenheiro', 'Engineer'], ['Granada', 'Grenade'], ['Pistola de faíscas.', 'Spark pistol.'], ['Granada: bomba com rastilho que explode em área.', 'Grenade: a fused bomb that explodes in an area.'],
+  ['Sentinela', 'Sentinel'], ['Muralha viva', 'Living wall'], ['Dispara de trás do escudo.', 'Fires from behind the shield.'], ['Muralha viva: escudo que bloqueia dano.', 'Living wall: a shield that blocks damage.'],
+  // ---- categorias / dificuldades / arenas ----
+  ['Todos', 'All'], ['✨ Magia', '✨ Magic'], ['⚔ Armas', '⚔ Weapons'], ['🌿 Natureza e bestas', '🌿 Nature & beasts'], ['☀ Sombras e divino', '☀ Shadow & divine'],
+  ['Fácil', 'Easy'], ['Normal', 'Normal'], ['Difícil', 'Hard'], ['Média', 'Medium'],
+  ['Clássica', 'Classic'], ['Cemitério', 'Graveyard'], ['Lava', 'Lava'], ['Gelo', 'Ice'], ['Deserto', 'Desert'], ['Abismo', 'Abyss'], ['Aberta', 'Open'],
+  // ---- poções / armaduras / armas ----
+  ['Velocidade', 'Speed'], ['Regeneração', 'Regeneration'], ['Reflexos', 'Reflexes'], ['Vampirismo', 'Vampirism'], ['Gigante', 'Giant'],
+  ['+50% de dano durante 12s', '+50% damage for 12s'], ['+40% de velocidade durante 12s', '+40% speed for 12s'], ['Cura 40% da vida ao longo de 10s', 'Heals 40% of health over 10s'],
+  ['Cooldowns reduzidos a metade durante 12s', 'Cooldowns halved for 12s'], ['Absorve 40 de dano durante 12s', 'Absorbs 40 damage for 12s'], ['Curas 25% do dano que causas durante 12s', 'Heals 25% of the damage you deal for 12s'],
+  ['Semi-invisível durante 4s: os bots falham muito a pontaria', 'Semi-invisible for 4s: bots miss their aim a lot'], ['+30% de vida máxima (e curas essa vida), mas ficas maior durante 10s', '+30% max health (and heals it), but you grow bigger for 10s'],
+  ['Couro', 'Leather'], ['Ferro', 'Iron'], ['Aço', 'Steel'], ['Mithril', 'Mithril'], ['Ágil', 'Agile'], ['Vital', 'Vital'], ['Espinhos', 'Thorns'], ['Celestial', 'Celestial'],
+  ['−32% de dano e +12% de velocidade', '−32% damage and +12% speed'], ['−34% de dano e +15% de vida máxima', '−34% damage and +15% max health'], ['−36% de dano e devolve 25% do dano a quem estiver perto', '−36% damage and returns 25% of damage to anyone nearby'],
+  ['−40% de dano, +8% de velocidade, cura 1,5 vida/s e cooldowns 12% mais rápidos', '−40% damage, +8% speed, heals 1.5 HP/s and 12% faster cooldowns'],
+  ['Afiada', 'Sharp'], ['Reforçada', 'Reinforced'], ['Longa', 'Long'], ['Mestra', 'Master'], ['Lendária', 'Legendary'], ['Nenhuma', 'None'],
+  ['Poção Dourada', 'Golden Potion'], ['A tua próxima vitória dá ×2 moedas', 'Your next win gives ×2 coins'], ['Pergaminho do Sábio', "Sage's Scroll"], ['A tua próxima vitória dá +1 ponto de nível', 'Your next win gives +1 level point'],
+  // ---- skins ----
+  ['Dourado', 'Golden'], ['Gélido', 'Frosty'], ['Sombra', 'Shadow'], ['Brasa', 'Ember'], ['Jade', 'Jade'], ['Rubi', 'Ruby'], ['Pérola', 'Pearl'], ['Ónix', 'Onyx'], ['Oceano', 'Ocean'], ['Floresta', 'Forest'], ['Cítrico', 'Citrus'], ['Chiclete', 'Bubblegum'],
+  ['Violeta', 'Violet'], ['Turquesa', 'Turquoise'], ['Lima', 'Lime'], ['Bronze', 'Bronze'], ['Prata', 'Silver'], ['Carmesim', 'Crimson'], ['Pôr-do-sol', 'Sunset'], ['Mar profundo', 'Deep sea'], ['Aurora', 'Aurora'], ['Algodão-doce', 'Cotton candy'],
+  ['Magma', 'Magma'], ['Tigre', 'Tiger'], ['Zebra', 'Zebra'], ['Abelha', 'Bee'], ['Joaninha', 'Ladybug'], ['Leopardo', 'Leopard'], ['Camuflado', 'Camo'], ['Xadrez', 'Checkers'], ['Alvo', 'Bullseye'], ['Dois mundos', 'Two worlds'], ['Equilíbrio', 'Balance'],
+  ['Brasas', 'Embers'], ['Nevão', 'Blizzard'], ['Faísca', 'Spark'], ['Tóxico', 'Toxic'], ['Sangrento', 'Bloody'], ['Néon', 'Neon'], ['Orbes arcanos', 'Arcane orbs'], ['Anjo', 'Angel'], ['Sakura', 'Sakura'], ['Vazio', 'Void'], ['Cósmico', 'Cosmic'],
+  ['Arco-íris', 'Rainbow'], ['Tempestade', 'Storm'], ['Espírito', 'Spirit'], ['Diamante', 'Diamond'], ['Vulcão', 'Volcano'], ['Ouro real', 'Royal gold'], ['Dragão', 'Dragon'], ['Ómega', 'Omega'],
+  ['Original', 'Original'], ['Todas', 'All'], ['Cores', 'Colors'], ['Padrões', 'Patterns'], ['Efeitos ✨', 'Effects ✨'], ['Lendárias 👑', 'Legendary 👑'],
+  [' · cor original', ' · original color'], [' · cor', ' · color'], [' · padrão', ' · pattern'], [' · efeito animado', ' · animated effect'], [' · lendária ✨', ' · legendary ✨'],
+  // ---- torre / bónus ----
+  ['Coração de pedra', 'Heart of stone'], ['+20% de vida máxima (e cura essa vida)', '+20% max health (and heals it)'], ['Fúria da torre', 'Tower fury'], ['+15% de dano', '+15% damage'],
+  ['Pele de ferro', 'Iron skin'], ['+10% de redução de dano (máx. 60%)', '+10% damage reduction (max 60%)'], ['Foco arcano', 'Arcane focus'], ['Ataque e especial recarregam 20% mais depressa', 'Attack and special recharge 20% faster'],
+  ['Pés de vento', 'Windfeet'], ['+10% de velocidade', '+10% speed'], ['Sede de sangue', 'Bloodlust'], ['+15% de vida recuperada ao subir de andar', '+15% health recovered when climbing a floor'],
+  ['Segunda chance', 'Second chance'], ['+1 vida (máx. 5)', '+1 life (max 5)'],
+  // ---- conquistas ----
+  ['Primeira vitória', 'First victory'], ['Veterano', 'Veteran'], ['Campeão', 'Champion'], ['Lenda da arena', 'Arena legend'], ['Em chamas', 'On fire'], ['5 vitórias seguidas', '5 wins in a row'], ['10 vitórias seguidas', '10 wins in a row'],
+  ['Aprendiz da Torre', 'Tower Apprentice'], ['Escalador', 'Climber'], ['Senhor da Torre', 'Lord of the Tower'], ['Estilo próprio', 'Own style'], ['Guarda-roupa', 'Wardrobe'], ['Fashionista', 'Fashionista'],
+  ['Imparável', 'Unstoppable'], ['Mestre de heróis', 'Hero master'], ['Colecionador', 'Collector'], ['Duro de roer', 'Tough nut'], ['Sem arranhões', 'Without a scratch'], ['Último de pé', 'Last one standing'],
+  ['Dupla dinâmica', 'Dynamic duo'], ['Sem batota', 'No cheating'], ['Nível máximo', 'Max level'], ['Primeira estrela', 'First star'], ['Cinco estrelas', 'Five stars'], ['Cofre cheio', 'Full vault'],
+  ['Blindado', 'Armored up'], ['Arma lendária', 'Legendary weapon'], ['Destruidor', 'Destroyer'], ['Caçador de missões', 'Quest hunter'], ['Viciado na arena', 'Arena addict'],
+  ['Compra a tua primeira skin', 'Buy your first skin'], ['Compra 20 skins', 'Buy 20 skins'], ['Compra 5 skins', 'Buy 5 skins'], ['Ganha com 10 heróis diferentes', 'Win with 10 different heroes'], ['Ganha com 25 heróis diferentes', 'Win with 25 different heroes'],
+  ['Ganha uma partida no Difícil', 'Win a match on Hard'], ['Ganha sem perder nenhuma ronda', 'Win without losing a round'], ['Ganha uma Batalha solitária', 'Win a Lone Battle'], ['Ganha uma partida de 2 vs 2', 'Win a 2 vs 2 match'], ['Ganha sem beber poções', 'Win without drinking potions'],
+  ['Leva um herói ao nível 10', 'Take a hero to level 10'], ['Faz o primeiro Prestígio', 'Do your first Prestige'], ['Leva um herói a 5 ★', 'Take a hero to 5 ★'], ['Junta 5000 moedas', 'Collect 5000 coins'],
+  ['Compra a armadura Celestial num herói', 'Buy the Celestial armor on a hero'], ['Compra a arma Lendária num herói', 'Buy the Legendary weapon on a hero'], ['Causa 10 000 de dano', 'Deal 10,000 damage'], ['Resgata 10 missões', 'Claim 10 quests'], ['Joga durante 2 horas', 'Play for 2 hours'],
+  ['🏆 Conquista', '🏆 Achievement'],
+  // ---- menus / ecrãs ----
+  ['ARENA DE', 'ARENA OF'], ['HERÓIS', 'HEROES'], ['Começar jogo', 'Start game'], ['Escolher personagem', 'Choose character'], ['Loja', 'Shop'], ['📊 Estatísticas e conquistas', '📊 Stats & achievements'], ['Estatísticas e conquistas', 'Stats & achievements'],
+  ['Missões', 'Quests'], ['Sair do jogo', 'Quit game'], ['Settings', 'Settings'], ['Dica: joga com o telemóvel na horizontal.', 'Tip: play with your phone in landscape.'],
+  ['Escolhe o teu herói', 'Choose your hero'], ['Cada herói tem o seu próprio nível. Vence bots para o fazer subir.', 'Each hero has its own level. Beat bots to level it up.'], ['← Voltar', '← Back'],
+  ['Dificuldade', 'Difficulty'], ['Modo', 'Mode'], ['Arena', 'Arena'], ['Bot lento e distraído · +1 nível · +30 🪙', 'Slow, distracted bot · +1 level · +30 🪙'], ['Bot esquiva e usa habilidades · +1 nível · +60 🪙', 'Bot dodges and uses abilities · +1 level · +60 🪙'],
+  ['Bot rápido, prevê os teus movimentos · +2 níveis · +120 🪙', 'Fast bot, predicts your moves · +2 levels · +120 🪙'],
+  ['Bot lento e distraído', 'Slow, distracted bot'], ['Bots lentos e distraídos', 'Slow, distracted bots'], ['Bot esquiva e usa habilidades', 'Bot dodges and uses abilities'], ['Bots esquivam e usam habilidades', 'Bots dodge and use abilities'],
+  ['Bot rápido, prevê os teus movimentos', 'Fast bot, predicts your moves'], ['Bots rápidos, prevêem os teus movimentos', 'Fast bots, predict your moves'],
+  ['🧪 Poções', '🧪 Potions'], ['🛡 Armaduras', '🛡 Armor'], ['🗡 Armas', '🗡 Weapons'], ['🎨 Skins', '🎨 Skins'], ['🎁 Ofertas', '🎁 Offers'],
+  ['Volume', 'Volume'], ['Música de fundo', 'Background music'], ['Eventos nas arenas', 'Arena events'], ['Repetição em câmara lenta no fim da ronda', 'Slow-motion replay at the end of the round'], ['Efeitos sonoros', 'Sound effects'], ['Controlos touch', 'Touch controls'],
+  ['Idioma', 'Language'], ['Apagar progresso', 'Erase progress'], ['Tens a certeza? Clica de novo', 'Are you sure? Click again'], ['Progresso apagado ✓', 'Progress erased ✓'],
+  ['📊 Geral', '📊 General'], ['🏆 Conquistas', '🏆 Achievements'], ['Cada missão paga mais moedas quanto mais difícil for.', 'The harder a quest, the more coins it pays.'],
+  ['Pausa', 'Pause'], ['Retomar', 'Resume'], ['Desistir (volta ao menu)', 'Give up (back to menu)'], ['⏸ Pausa (Esc)', '⏸ Pause (Esc)'], ['⏭ Saltar para o resultado', '⏭ Skip to result'],
+  ['🏆 Torneio', '🏆 Tournament'], ['Começar', 'Start'], ['⏩ Simular', '⏩ Simulate'], ['Sair do torneio', 'Leave tournament'], ['👑 Chefe derrotado!', '👑 Boss defeated!'],
+  ['Jogar outra vez', 'Play again'], ['Trocar de herói', 'Switch hero'], ['Menu principal', 'Main menu'], ['Até à próxima!', 'See you next time!'], ['Já podes fechar o separador. O teu progresso está guardado.', 'You can close the tab now. Your progress is saved.'], ['Voltar ao menu', 'Back to menu'],
+  ['ESPECIAL', 'SPECIAL'], ['ATACAR', 'ATTACK'], ['▶ Começar jogo', '▶ Start game'], ['👁 Ver jogo', '👁 Watch match'], ['Começar duelo', 'Start duel'],
+  // ---- modos ----
+  ['🎲 Aleatório', '🎲 Random'], ['🎲 Aleatória', '🎲 Random'], ['👥 2 vs 2 (tu + bot aleatório)', '👥 2 vs 2 (you + random bot)'], ['☠ Batalha solitária (1 vs 3)', '☠ Lone Battle (1 vs 3)'], ['🗼 Torre', '🗼 Tower'],
+  ['🎮 Co-op local (J1 + J2 vs 2 bots)', '🎮 Local co-op (P1 + P2 vs 2 bots)'], ['🥊 Duelo local (J1 vs J2)', '🥊 Local duel (P1 vs P2)'], ['🏆 Torneio local (4)', '🏆 Local tournament (4)'], ['Subir a Torre', 'Climb the Tower'],
+  ['Herói do J2: ', 'P2 hero: '], ['Bot', 'Bot'], ['Meia-final 1', 'Semifinal 1'], ['Meia-final 2', 'Semifinal 2'], ['Final', 'Final'], ['Próximo:', 'Next:'], ['(melhor de 3)', '(best of 3)'],
+  ['J1: WASD + rato (esq. ataque · dir./Espaço especial)', 'P1: WASD + mouse (left = attack · right/Space = special)'], ['J1: WASD mover · J ataque · Espaço especial', 'P1: WASD move · J attack · Space special'],
+  ['J1: WASD, J e Espaço · J2: setas, Enter e Shift · mira automática', 'P1: WASD, J and Space · P2: arrows, Enter and Shift · auto-aim'], ['   ·   J2: setas mover · Enter ataque · Shift especial   (mira automática)', '   ·   P2: arrows move · Enter attack · Shift special   (auto-aim)'],
+  ['W frente · S trás · A/D lados · Rato apontar · Clique atacar · Espaço / botão direito = especial · Esc pausa', 'W forward · S back · A/D sides · Mouse aim · Click attack · Space / right button = special · Esc pause'],
+  ['(Espaço / botão direito)', '(Space / right button)'], ['Modo local: sem moedas, níveis nem estatísticas.', 'Local mode: no coins, levels or stats.'], ['"Jogar outra vez" sorteia outro herói para o J2.', '"Play again" picks another hero for P2.'],
+  [' · modo local, sem moedas nem níveis', ' · local mode, no coins or levels'], ['Torneio local', 'Local tournament'],
+  // ---- HUD / combate ----
+  ['MORTE SÚBITA!', 'SUDDEN DEATH!'], ['VITÓRIA!', 'VICTORY!'], ['DERROTA', 'DEFEAT'], ['RONDA GANHA!', 'ROUND WON!'], ['RONDA PERDIDA', 'ROUND LOST'], ['RONDA', 'ROUND'], ['LUTA!', 'FIGHT!'], ['VIVOS', 'ALIVE'],
+  ['ELIMINADO', 'ELIMINATED'], ['ELIMINADO!', 'ELIMINATED!'], ['eliminado', 'eliminated'], ['☠ eliminado', '☠ eliminated'], ['ALIADO', 'ALLY'], ['TU', 'YOU'], ['VITÓRIA DA EQUIPA!', 'TEAM VICTORY!'], ['ÚLTIMO SOBREVIVENTE!', 'LAST SURVIVOR!'], ['ÚLTIMO VIVO!', 'LAST ONE ALIVE!'],
+  ['J1 VENCE!', 'P1 WINS!'], ['J2 VENCE!', 'P2 WINS!'], ['É CAMPEÃO!', 'IS THE CHAMPION!'], ['PERDESTE UMA VIDA!', 'YOU LOST A LIFE!'], ['ANDAR SUPERADO!', 'FLOOR CLEARED!'], ['ANDAR', 'FLOOR'], ['CHEFE', 'BOSS'], ['TORRE', 'TOWER'], ['CAÍSTE LOGO', 'YOU FELL RIGHT AWAY'],
+  ['REPETIÇÃO · câmara lenta', 'REPLAY · slow motion'], ['prime qualquer tecla ou clica para saltar', 'press any key or click to skip'], ['☠ ELIMINADO — a ver os bots lutarem', '☠ ELIMINATED — watching the bots fight'],
+  ['☄ CHUVA DE METEOROS!', '☄ METEOR SHOWER!'], ['❤ Caixa de vida!', '❤ Health crate!'], ['⚠ A ZONA ESTÁ A ENCOLHER!', '⚠ THE ZONE IS SHRINKING!'],
+  ['(cuidado com o buraco!)', '(watch out for the hole!)'], ['(evita as poças!)', '(avoid the puddles!)'], ['(o chão escorrega!)', '(the floor is slippery!)'], ['(a areia abranda-te!)', '(the sand slows you down!)'],
+  ['Nv', 'Lv'], ['Arena:', 'Arena:'], ['🗡 Ataque:', '🗡 Attack:'], ['✨ Especial', '✨ Special'], ['Ataque', 'Attack'], ['Especial', 'Special'], ['clique', 'click'], ['Espaço / botão direito', 'Space / right button'],
+  // ---- loja / geral ----
+  ['moedas', 'coins'], ['moeda', 'coin'], ['Cheio', 'Full'], ['Já tens', 'You already have'], ['Tens', 'You have'], ['Compraste', 'You bought'], ['Compraste:', 'Bought:'], ['Armadura', 'Armor'], ['Arma', 'Weapon'],
+  ['✔ Comprada', '✔ Bought'], ['✔ Comprado hoje', '✔ Bought today'], ['✔ Equipada', '✔ Equipped'], ['Equipar', 'Equip'], ['🔒 Compra a anterior', '🔒 Buy the previous one'], ['🔒 Herói bloqueado', '🔒 Hero locked'], ['Preço normal:', 'Normal price:'],
+  ['Esta oferta já não é necessária', 'This offer is no longer needed'], ['Proteção permanente', 'Permanent protection'], ['exclusivo', 'exclusive'],
+  ['Ofertas de hoje · renovam à meia-noite · cada uma só se compra 1× por dia.', "Today's offers · renew at midnight · each can only be bought once a day."],
+  ['As skins são por herói e só mudam o aspeto. Compras uma vez e podes trocar quando quiseres.', 'Skins are per hero and only change the look. Buy once and switch whenever you like.'],
+  ['A arma é por herói. Compra por ordem: cada nova substitui a anterior e os bónus acumulam-se.', 'Weapons are per hero. Buy in order: each new one replaces the previous and bonuses stack.'],
+  ['A armadura é por herói. Compra por ordem: cada nova substitui a anterior.', 'Armor is per hero. Buy in order: each new one replaces the previous.'],
+  ['Bebe as poções durante a luta (teclas 1–8, ou botões no telemóvel).', 'Drink potions during the fight (keys 1–8, or buttons on mobile).'],
+  [' equipou a arma ', ' equipped the weapon '], [' equipou a armadura ', ' equipped the armor '], [' ganhou a skin ', ' got the skin '], ['ganhou a estrela', 'earned star'], ['! +3% de dano e de vida para sempre', '! +3% damage and health forever'],
+  [' já tem tudo', ' already has everything'], ['para sempre', 'forever'], ['recarrega', 'recharges'], ['mais rápido', 'faster'], ['de alcance', 'range'], ['de dano', 'damage'], ['os teus golpes incendeiam', 'your strikes ignite'],
+  // ---- heróis / estatísticas ----
+  ['Herói atual:', 'Current hero:'], ['Nível', 'Level'], ['(máx.)', '(max)'], ['Vida', 'Health'], ['Dano', 'Damage'], ['Estrelas', 'Stars'], ['Soma dos níveis:', 'Total levels:'], ['★ Prestígio', '★ Prestige'], ['Nível volta a 1. Confirmar?', 'Level resets to 1. Confirm?'],
+  ['Desbloqueia com soma de níveis', 'Unlock with a level total of'], ['Atual:', 'Current:'], ['Partidas', 'Matches'], ['Vitórias', 'Wins'], ['Derrotas', 'Losses'], ['% de vitórias', '% win rate'], ['Sequência atual', 'Current streak'], ['Melhor sequência', 'Best streak'],
+  ['Tempo de combate', 'Combat time'], ['Dano causado', 'Damage dealt'], ['🪙 ganhas em partidas', '🪙 earned in matches'], ['Missões resgatadas', 'Quests claimed'], ['🗼 Recorde da Torre', '🗼 Tower record'], ['Heróis mais usados', 'Most-used heroes'], ['Ainda sem partidas. Vai jogar!', 'No matches yet. Go play!'],
+  // ---- missões ----
+  ['Ganha 1 partida de 2 vs 2', 'Win 1 match of 2 vs 2'], ['Ganha 1 partida no Normal ou no Difícil', 'Win 1 match on Normal or Hard'], ['Ganha 1 partida no Difícil', 'Win 1 match on Hard'], ['Ganha 1 partida sem beber poções', 'Win 1 match without drinking potions'],
+  ['Ganha 1 partida sem perderes nenhuma ronda', 'Win 1 match without losing a round'], ['Ganha 1 Batalha solitária (1 vs 3)', 'Win 1 Lone Battle (1 vs 3)'], ['herói', 'hero'],
+  ['✔ Resgatada', '✔ Claimed'], ['Resgatar recompensa', 'Claim reward'], ['Em curso', 'In progress'], ['Renova em', 'Renews in'], [' · às 00h, 06h, 12h e 18h', ' · at 00h, 06h, 12h and 18h'],
+  ['⏰ As missões renovaram! Recebeste +', '⏰ Quests renewed! You got +'], [' moedas de missões concluídas que não tinhas resgatado.', ' coins from completed quests you had not claimed.'], ['✅ Missão concluída:', '✅ Quest complete:'],
+  ['(vai a Missões resgatar a recompensa)', '(go to Quests to claim the reward)'], ['🎉 Resgataste a recompensa da missão! Recebeste +', '🎉 Quest reward claimed! You received +'],
+  // ---- fim de jogo / níveis / torre ----
+  ['Sem subida de nível desta vez. Tenta outra vez!', 'No level-up this time. Try again!'], ['Nenhum andar superado, sem moedas desta vez.', 'No floors cleared, no coins this time.'], ['💔 Perdeste uma vida. Tenta o andar outra vez!', '💔 You lost a life. Try the floor again!'],
+  ['🏆 Novo recorde!', '🏆 New record!'], ['subiu para o nível', 'reached level'], ['+10% vida · +7% dano · especial 4% mais rápido por nível', '+10% health · +7% damage · special 4% faster per level'],
+  ['🔓 Novo herói desbloqueado:', '🔓 New hero unlocked:'], ['📜 Pergaminho do Sábio: +1 ponto de nível!', "📜 Sage's Scroll: +1 level point!"], ['já está no nível máximo (10).', 'is already at max level (10).'],
+  ['da arena aleatória', 'from the random arena'], ['Batalha solitária', 'Lone Battle'], ['Já tens:', 'You have:'], ['Tens:', 'You have:'], ['saldo', 'balance'], ['recorde', 'record'], ['andar', 'floor'],
+  ['Poção Dourada', 'Golden Potion'], ['Torre', 'Tower'], ['Escolhe um bónus que fica até ao fim da subida.', 'Pick a bonus that lasts until the end of the climb.'], ['+30% de vida máxima (e cura essa vida), mas ficas maior durante 10s', '+30% max health (and heals it), but you grow bigger for 10s'],
+  ['Nível máximo', 'Max level'], ['próximo nível', 'next level'], ['vida', 'health'], ['dano', 'damage'], ['vitórias', 'wins'],
+  ['Poções', 'Potions'], ['Poção', 'Potion'], ['sem loja', 'no shop'], ['equipou', 'equipped'], ['Usa na luta com a tecla', 'Use it in a fight with key'], ['desbloqueadas', 'unlocked'], ['desbloqueada', 'unlocked'], ['por andar', 'per floor'], ['recorde: andar', 'record: floor']
+];
+// regras com números (aplicadas antes do dicionário); fn recebe os grupos
+const I18N_RX = [
+  [/Ganha 1 partida com o (.+)/g, (m, h) => `Win 1 match with ${h === 'herói' ? 'a hero' : 'the ' + h}`],
+  [/Ganha (\d+) partidas?/g, (m, n) => `Win ${n} match${n == 1 ? '' : 'es'}`],
+  [/Joga (\d+) partidas? até ao fim/g, (m, n) => `Play ${n} match${n == 1 ? '' : 'es'} to the end`],
+  [/Causa (\d+) (?:de dano|damage) aos inimigos/g, (m, n) => `Deal ${n} damage to enemies`],
+  [/Bebe (\d+) poç(?:ão|ões) em combate/g, (m, n) => `Drink ${n} potion${n == 1 ? '' : 's'} in combat`],
+  [/Usa a habilidade especial (\d+) vezes/g, (m, n) => `Use the special ability ${n} times`],
+  [/Chega ao andar (\d+) da Torre/g, (m, n) => `Reach floor ${n} of the Tower`],
+  [/Andar (\d+) superado!/g, (m, n) => `Floor ${n} cleared!`],
+  [/ANDAR (\d+)/g, (m, n) => `FLOOR ${n}`],
+  [/(\d+) vitórias? · (\d+) derrotas?/g, (m, a, b) => `${a} win${a == 1 ? '' : 's'} · ${b} loss${b == 1 ? '' : 'es'}`],
+  [/(\d+) andar(?:es)?\b/g, (m, n) => `${n} floor${n == 1 ? '' : 's'}`],
+  [/(\d+) chefes?\b/g, (m, n) => `${n} boss${n == 1 ? '' : 'es'}`],
+  [/(\d+)\/3 para o (?:próximo nível|next level) \(nível (\d+)\)/g, (m, a, b) => `${a}/3 to the next level (level ${b})`],
+  [/\+(\d+)\/3 de nível/g, (m, n) => `+${n}/3 level`],
+  [/\+(\d+)% de dano · recarrega (\d+)% mais rápido/g, (m, a, b) => `+${a}% damage · recharges ${b}% faster`],
+  [/\+(\d+)% de dano/g, (m, n) => `+${n}% damage`],
+  [/\+(\d+)% de alcance/g, (m, n) => `+${n}% range`],
+  [/[−-](\d+)% de dano/g, (m, n) => `−${n}% damage`],
+  [/(Armadura|Arma) (.+?) para (.+?) · /g, (m, a, b, c) => `${a} ${b} for ${c} · `],
+  [/ vs (.+?), (.+?) e (.+?) \(/g, (m, a, b, c) => ` vs ${a}, ${b} and ${c} (`],
+  [/\bJ([12])\b/g, (m, n) => 'P' + n],
+  [/(\d+) vezes\b/g, (m, n) => `${n} times`],
+  [/×(\d+) Poção Dourada/g, (m, n) => `×${n} Golden Potion`],
+  [/(\d+) vitórias?\b/g, (m, n) => `${n} win${n == 1 ? '' : 's'}`],
+  [/(\d+) derrotas?\b/g, (m, n) => `${n} loss${n == 1 ? '' : 'es'}`],
+  [/Renova em (\d+)h (\d+)min/g, (m, h, mi) => `Renews in ${h}h ${mi}min`],
+  [/(\d+) segundos?\b/g, (m, n) => `${n} second${n == 1 ? '' : 's'}`]
+,[/(\d+) vidas?\b/g, (m, n) => `${n} li${n == 1 ? 'fe' : 'ves'}`]
+];
+let I18N_RE = null, I18N_RE1 = null, I18N_MAP = null;
+const I18N_CACHE = new Map();
+function i18nBuild() {
+  I18N_MAP = new Map();
+  let GL; try { GL = GEN; } catch (e) { return; }
+  for (const g of GL) if (g.en) {
+    I18N_MAP.set(g.name, g.en.n); I18N_MAP.set(g.s.name, g.en.sn);
+    g.d.forEach((x, i) => I18N_MAP.set(x, g.en.d[i])); I18N_MAP.set(g.d.join(' '), g.en.d.join(' '));
+  }
+  for (const [a, b] of I18N_PH) if (!I18N_MAP.has(a)) I18N_MAP.set(a, b);
+  const keys = [...I18N_MAP.keys()].filter(k => k).sort((a, b) => b.length - a.length);
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const mk = ks => new RegExp(ks.map(k => (/^\p{L}/u.test(k) ? '(?<![\\p{L}\\d])' : '') + esc(k) + (/\p{L}$/u.test(k) ? '(?![\\p{L}])' : '')).join('|'), 'gu');
+  I18N_RE1 = mk(keys.filter(k => k.includes(' ') || k.length >= 12));
+  I18N_RE = mk(keys);
+}
+function T(s) {
+  if (LANG !== 'en' || typeof s !== 'string' || !s || !/[A-Za-zÀ-ÿ]/.test(s)) return s;
+  const c = I18N_CACHE.get(s); if (c !== undefined) return c;
+  if (!I18N_RE) { i18nBuild(); if (!I18N_RE) return s; }
+  const sub = m => I18N_MAP.get(m) ?? m;
+  let r = s.replace(I18N_RE1, sub);
+  for (const [rx, fn] of I18N_RX) r = r.replace(rx, fn);
+  r = r.replace(I18N_RE, sub).replace(/(\d+),(\d)(?=s\b)/g, '$1.$2');
+  if (I18N_CACHE.size > 4000) I18N_CACHE.clear();
+  I18N_CACHE.set(s, r); return r;
+}
+if (LANG === 'en') {
+  document.documentElement.lang = 'en';
+  const _ft = CanvasRenderingContext2D.prototype.fillText, _st = CanvasRenderingContext2D.prototype.strokeText;
+  CanvasRenderingContext2D.prototype.fillText = function (t, ...a) { return _ft.call(this, T(String(t)), ...a); };
+  CanvasRenderingContext2D.prototype.strokeText = function (t, ...a) { return _st.call(this, T(String(t)), ...a); };
+}
+function i18nNode(root) {
+  if (LANG !== 'en') return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n; const list = []; while ((n = w.nextNode())) list.push(n);
+  for (const t of list) { const p = t.parentNode && t.parentNode.nodeName; if (p === 'SCRIPT' || p === 'STYLE') continue; if (t.__en === t.nodeValue) continue; const v = T(t.nodeValue); t.__en = v; if (v !== t.nodeValue) t.nodeValue = v; }
+  const els = root.nodeType === 1 ? [root, ...root.querySelectorAll('[title],[placeholder],[aria-label]')] : [];
+  for (const e of els) for (const a of ['title', 'placeholder', 'aria-label']) if (e.hasAttribute && e.hasAttribute(a)) { const o = e.getAttribute(a), v = T(o); if (v !== o) e.setAttribute(a, v); }
+}
+if (LANG === 'en') {
+  document.title = 'Arena of Heroes';
+  let busy = false;
+  new MutationObserver(ms => {
+    if (busy) return; busy = true;
+    try { for (const m of ms) { if (m.type === 'characterData') { const t = m.target; if (t.__en !== t.nodeValue) { const v = T(t.nodeValue); t.__en = v; if (v !== t.nodeValue) t.nodeValue = v; } } else for (const a of m.addedNodes) { if (a.nodeType === 3) { if (a.__en !== a.nodeValue) { const v = T(a.nodeValue); a.__en = v; if (v !== a.nodeValue) a.nodeValue = v; } } else if (a.nodeType === 1) i18nNode(a); } } } finally { busy = false; }
+  }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+  window.addEventListener('DOMContentLoaded', () => i18nNode(document.body));
+}
+/* ---------- /I18N ---------- */
+
 const W = 960, H = 600;
 const AR = { x: 40, y: 70, w: 880, h: 500 };
 const ARENAS = {
@@ -364,7 +623,7 @@ function skinDeco(c, f, r, t) {
 const skinOf = k => save.skins[k] || (save.skins[k] = { own: [], sel: '' }), skinCount = () => Object.values(save.skins).reduce((a, z) => a + z.own.length, 0);
 const save = { levels: Object.fromEntries(ALL.map(k => [k, 1])), selected: 'warrior', arena: 'random', mode: 1, p2: 'random', coins: 0,
   potions: { fury: 0, speed: 0, regen: 0, reflex: 0, ward: 0, vamp: 0, ghost: 0, giant: 0 }, armor: Object.fromEntries(ALL.map(k => [k, 0])), weapon: Object.fromEntries(ALL.map(k => [k, 0])), boost: { gold: 0, sage: 0 }, tower: { best: 0, runs: 0 }, skins: {}, offers: null, quests: null, stars: Object.fromEntries(ALL.map(k => [k, 0])), ach: {}, stats: { games: 0, wins: 0, losses: 0, time: 0, streak: 0, best: 0, dmg: 0, coins: 0, quests: 0, heroes: {}, f: {} }, pts: Object.fromEntries(ALL.map(k => [k, 0])), unlocked: null,
-  settings: { volume: 0.6, sfx: true, music: true, events: true, replay: true, touch: ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) } };
+  settings: { volume: 0.6, sfx: true, music: true, events: true, replay: true, lang: LANG, touch: ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) } };
 try {
   const o = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
   if (o) {
@@ -396,6 +655,7 @@ try {
       if (typeof o.settings.events === 'boolean') save.settings.events = o.settings.events;
       if (typeof o.settings.replay === 'boolean') save.settings.replay = o.settings.replay;
       if (typeof o.settings.touch === 'boolean') save.settings.touch = o.settings.touch;
+      if (o.settings.lang === 'en' || o.settings.lang === 'pt') save.settings.lang = o.settings.lang;
     }
   }
 } catch (e) {}
@@ -1297,7 +1557,7 @@ function renderShop() {
   }
 }
 // settings
-function syncSettings() { $('setVol').value = Math.round(save.settings.volume * 100); $('setMus').checked = save.settings.music; $('setEv').checked = save.settings.events; $('setRp').checked = save.settings.replay !== false; $('setSfx').checked = save.settings.sfx; $('setTouch').checked = save.settings.touch; }
+function syncSettings() { $('setVol').value = Math.round(save.settings.volume * 100); $('setMus').checked = save.settings.music; $('setEv').checked = save.settings.events; $('setRp').checked = save.settings.replay !== false; $('setSfx').checked = save.settings.sfx; $('setTouch').checked = save.settings.touch; $('langPt').classList.toggle('sel', LANG === 'pt'); $('langEn').classList.toggle('sel', LANG === 'en'); }
 $('setVol').addEventListener('input', e => { save.settings.volume = e.target.value / 100; persist(); });
 $('setVol').addEventListener('change', () => { audio(); SFX.hit(); });
 $('setEv').addEventListener('change', e => { save.settings.events = e.target.checked; persist(); });
@@ -1305,6 +1565,11 @@ $('setRp').addEventListener('change', e => { save.settings.replay = e.target.che
 $('setMus').addEventListener('change', e => { save.settings.music = e.target.checked; persist(); if (e.target.checked) audio(); });
 $('setSfx').addEventListener('change', e => { save.settings.sfx = e.target.checked; persist(); if (e.target.checked) { audio(); SFX.click(); } });
 $('setTouch').addEventListener('change', e => { save.settings.touch = e.target.checked; persist(); });
+for (const b of document.querySelectorAll('.langsw [data-lang]')) b.addEventListener('click', () => {
+  const l = b.dataset.lang; if (l === LANG) return;
+  save.settings.lang = l; persist(); try { sessionStorage.setItem('arena-reopen-set', '1'); } catch (e) { } location.reload();
+});
+try { if (sessionStorage.getItem('arena-reopen-set')) { sessionStorage.removeItem('arena-reopen-set'); setTimeout(() => showScreen('s-set'), 0); } } catch (e) { }
 let resetArm = 0;
 $('bReset').addEventListener('click', () => {
   const b = $('bReset');
@@ -1315,7 +1580,7 @@ $('bReset').addEventListener('click', () => {
 
 // character cards
 const previews = []; let charCat = 'all';
-function heroSplit(k) { const d = CLASSES[k].desc, i = d.indexOf('. '); return i < 0 ? { atk: d, sp: '' } : { atk: d.slice(0, i + 1), sp: d.slice(i + 2) }; }
+function heroSplit(k) { const d = T(CLASSES[k].desc), i = d.indexOf('. '); return i < 0 ? { atk: d, sp: '' } : { atk: d.slice(0, i + 1), sp: d.slice(i + 2) }; }
 function renderCards() {
   const box = $('cards'); box.innerHTML = ''; previews.length = 0;
   const tabs = $('catTabs'); tabs.innerHTML = '';
@@ -2568,7 +2833,7 @@ requestAnimationFrame(frame);
 
 // debug / test hooks
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-window.__dbg = { drawFighter, tnPlay, tnShow, roundDone, endReplay, towerSpawn, towerNext, towerPay, endTowerRun, evMeteors, evCrate, evStep, zoneR, checkAch, ACH, renderStats, applyGear, botTiers, drawQuestAnim, MUS, musicTick, foes, opp, doSpecial, doAttack, aiThink, ALL, drinkIdx, POTIONS, ARMORS, renderShop, G, setArena, ARENAS, update, startMatch, DIFF, CLASSES, save, CKEYS, mkFighter, resetRound, endMatch, keys };
+window.__dbg = { endRound, hurt, showScreen, toast, T, WEAPONS, TBON, SKINS, drawFighter, tnPlay, tnShow, roundDone, endReplay, towerSpawn, towerNext, towerPay, endTowerRun, evMeteors, evCrate, evStep, zoneR, checkAch, ACH, renderStats, applyGear, botTiers, drawQuestAnim, MUS, musicTick, foes, opp, doSpecial, doAttack, aiThink, ALL, drinkIdx, POTIONS, ARMORS, renderShop, G, setArena, ARENAS, update, startMatch, DIFF, CLASSES, save, CKEYS, mkFighter, resetRound, endMatch, keys };
 })();
 </script>
 </body>
