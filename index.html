@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Arena de Heróis</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b0d18">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
 :root{--bg:#0d0f17;--panel:#171a27;--panel2:#20253a;--gold:#f2c14e;--txt:#e9ecf5;--mute:#8a92ad;--red:#e5533d;--blue:#6a7cff;--green:#3dbd6b}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -81,6 +86,8 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
 .qcard>div{flex:1;min-width:0}.qcard .qt{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--qc)}.qcard b{display:block;font-size:17px;margin:2px 0 6px}
 .qbar{height:9px;border-radius:5px;background:#0006;overflow:hidden}.qbar i{display:block;height:100%;background:var(--qc);transition:width .3s}.qcard small{color:var(--mute);font-size:13px}
 .qrew{font-weight:800;color:var(--gold);white-space:nowrap;font-size:18px}
+#stBody .sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.sbox{background:var(--panel);border:1px solid #2b3150;border-radius:12px;padding:12px;text-align:center}.sbox b{display:block;font-size:24px;color:var(--gold)}.sbox span{font-size:13px;color:var(--mute)}
+.acard{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid #2b3150;border-radius:12px;padding:10px 14px}.acard.off{opacity:.55}.acard .ai{font-size:28px;width:36px;text-align:center}.acard>div{flex:1;min-width:0}.acard b{display:block}.acard small{color:var(--mute);font-size:13px}.acard .qbar{margin-top:5px;--qc:var(--gold)}.acard.on{border-color:#f2c14e88}.acard .rw{color:var(--gold);font-weight:800;white-space:nowrap}
 #toast{white-space:pre-line;position:fixed;top:16px;left:50%;transform:translate(-50%,-140%);z-index:40;max-width:min(520px,92vw);background:#1b1f33;border:2px solid var(--gold);border-radius:14px;padding:12px 20px;color:#fff;font-weight:700;text-align:center;box-shadow:0 8px 30px #000a;transition:transform .35s;pointer-events:none}#toast.on{transform:translate(-50%,0)}
 #bSkip{position:fixed;right:12px;bottom:8px;z-index:6;display:none;padding:6px 18px;border-radius:999px;border:1px solid #ffb03a99;background:#000a;color:#ffd58a;font-size:14px;font-weight:700;cursor:pointer}#bSkip.on{display:block}
 </style>
@@ -105,6 +112,7 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
     <button class="btn primary" id="bPlay">Começar jogo</button>
     <button class="btn" id="bChar">Escolher personagem</button>
     <button class="btn" id="bShop">Loja</button>
+    <button class="btn" id="bStats">📊 Estatísticas e conquistas</button>
     <button class="btn" id="bQuests"><canvas id="qAnim" width="144" height="80"></canvas><span>Missões</span><span class="qbadge" id="qBadge">!</span></button>
     <button class="btn" id="bSet">Settings</button>
     <button class="btn" id="bQuit">Sair do jogo</button>
@@ -128,6 +136,7 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
   <p class="sub" id="diffHero"></p>
   <p class="sub" style="margin-top:4px">Modo</p>
   <div class="row" id="modeRow" style="gap:8px"></div>
+  <div class="row" id="p2Row" style="gap:8px;display:none"></div>
   <p class="sub" style="margin-top:4px">Arena</p>
   <div class="row" id="arenaRow" style="gap:8px;max-width:640px"></div>
   <div class="col">
@@ -142,7 +151,7 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
 <div class="screen hidden" id="s-shop">
   <h2>Loja</h2>
   <div class="chip" id="shopCoins"></div>
-  <div class="row" id="shopTabs" style="gap:8px"><button class="btn small sel" data-tab="pot">🧪 Poções</button><button class="btn small" data-tab="arm">🛡 Armaduras</button><button class="btn small" data-tab="wpn">🗡 Armas</button><button class="btn small" data-tab="off">🎁 Ofertas</button></div>
+  <div class="row" id="shopTabs" style="gap:8px"><button class="btn small sel" data-tab="pot">🧪 Poções</button><button class="btn small" data-tab="arm">🛡 Armaduras</button><button class="btn small" data-tab="wpn">🗡 Armas</button><button class="btn small" data-tab="skin">🎨 Skins</button><button class="btn small" data-tab="off">🎁 Ofertas</button></div>
   <div id="shopBody" class="col" style="width:min(560px,92vw)"></div>
   <p class="hint" id="shopMsg"></p>
   <button class="btn" id="bShopBack">← Voltar</button>
@@ -153,10 +162,20 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
   <h2>Settings</h2>
   <div class="setrow"><label for="setVol">Volume</label><input type="range" id="setVol" min="0" max="100"></div>
   <div class="setrow"><label for="setMus">Música de fundo</label><input type="checkbox" id="setMus"></div>
+  <div class="setrow"><label for="setEv">Eventos nas arenas</label><input type="checkbox" id="setEv"></div>
+  <div class="setrow"><label for="setRp">Repetição em câmara lenta no fim da ronda</label><input type="checkbox" id="setRp"></div>
   <div class="setrow"><label for="setSfx">Efeitos sonoros</label><input type="checkbox" id="setSfx"></div>
   <div class="setrow"><label for="setTouch">Controlos touch</label><input type="checkbox" id="setTouch"></div>
   <button class="btn danger small" id="bReset">Apagar progresso</button>
   <button class="btn" id="bSetBack">← Voltar</button>
+</div>
+
+<!-- ESTATÍSTICAS -->
+<div class="screen hidden" id="s-stats">
+  <h2>Estatísticas e conquistas</h2>
+  <div class="row" id="stTabs" style="gap:8px"><button class="btn small sel" data-st="gen">📊 Geral</button><button class="btn small" data-st="ach">🏆 Conquistas</button></div>
+  <div id="stBody" style="width:min(760px,100%);display:flex;flex-direction:column;gap:10px"></div>
+  <button class="btn" id="bStBack">← Voltar</button>
 </div>
 
 <!-- MISSÕES -->
@@ -180,6 +199,21 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
 </div>
 
 <!-- RESULTADO -->
+<div class="screen hidden" id="s-bracket">
+  <h2>🏆 Torneio</h2>
+  <p class="sub" id="brSub"></p>
+  <div class="col" id="brBody" style="gap:8px"></div>
+  <div class="col">
+    <button class="btn primary" id="brGo">Começar</button>
+    <button class="btn small" id="brSim">⏩ Simular</button>
+    <button class="btn small" id="brQuit">Sair do torneio</button>
+  </div>
+</div>
+<div class="screen hidden" id="s-tpick">
+  <h2>👑 Chefe derrotado!</h2>
+  <p class="sub" id="tpickSub"></p>
+  <div class="col" id="tpickBody"></div>
+</div>
 <div class="screen hidden" id="result">
   <div class="big" id="resTitle"></div>
   <div class="lvlup" id="resLvl"></div>
@@ -253,9 +287,13 @@ const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI;
 /* ---------- SAVE ---------- */
 const SAVE_KEY = 'arena-herois-v1';
 const ALL = ['warrior', 'mage', 'archer', 'ninja', 'paladin', 'druid', 'bomber', 'pyro', 'cryo', 'electro', 'necro', 'illusion', 'shadow', 'arcane', 'wind', 'geo', 'chrono', 'spear', 'berserk', 'duelist', 'crossbow', 'sniper', 'gunslinger', 'legion', 'chain', 'knives', 'samurai', 'wolf', 'bear', 'snake', 'spider', 'treant', 'hawk', 'beekeeper', 'shaman', 'boar', 'nymph', 'reaper', 'vampire', 'cleric', 'angel', 'demon', 'witch', 'monk', 'templar', 'ghost', 'darkknight'];
-const save = { levels: Object.fromEntries(ALL.map(k => [k, 1])), selected: 'warrior', arena: 'random', mode: 1, coins: 0,
-  potions: { fury: 0, speed: 0, regen: 0, reflex: 0, ward: 0, vamp: 0, ghost: 0, giant: 0 }, armor: Object.fromEntries(ALL.map(k => [k, 0])), weapon: Object.fromEntries(ALL.map(k => [k, 0])), boost: { gold: 0, sage: 0 }, offers: null, quests: null, pts: Object.fromEntries(ALL.map(k => [k, 0])), unlocked: null,
-  settings: { volume: 0.6, sfx: true, music: true, touch: ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) } };
+const SKINS = [{ id: 'gold', n: 'Dourado', price: 300, col: '#f2c14e' }, { id: 'ice', n: 'Gélido', price: 300, col: '#7fe0ff' }, { id: 'shadow', n: 'Sombra', price: 400, col: '#6a4aa0' }, { id: 'fire', n: 'Brasa', price: 400, col: '#ff6a2a' },
+  { id: 'jade', n: 'Jade', price: 500, col: '#2fd08a' }, { id: 'ruby', n: 'Rubi', price: 500, col: '#e0305a' }, { id: 'rainbow', n: 'Arco-íris ✨', price: 1200, col: null }];
+const SKIN_IDS = SKINS.map(x => x.id), skinCol = (id, t) => { const k = SKINS.find(x => x.id === id); return !k ? null : k.col || `hsl(${(t * 70) % 360},85%,60%)`; };
+const skinOf = k => save.skins[k] || (save.skins[k] = { own: [], sel: '' }), skinCount = () => Object.values(save.skins).reduce((a, z) => a + z.own.length, 0);
+const save = { levels: Object.fromEntries(ALL.map(k => [k, 1])), selected: 'warrior', arena: 'random', mode: 1, p2: 'random', coins: 0,
+  potions: { fury: 0, speed: 0, regen: 0, reflex: 0, ward: 0, vamp: 0, ghost: 0, giant: 0 }, armor: Object.fromEntries(ALL.map(k => [k, 0])), weapon: Object.fromEntries(ALL.map(k => [k, 0])), boost: { gold: 0, sage: 0 }, tower: { best: 0, runs: 0 }, skins: {}, offers: null, quests: null, stars: Object.fromEntries(ALL.map(k => [k, 0])), ach: {}, stats: { games: 0, wins: 0, losses: 0, time: 0, streak: 0, best: 0, dmg: 0, coins: 0, quests: 0, heroes: {}, f: {} }, pts: Object.fromEntries(ALL.map(k => [k, 0])), unlocked: null,
+  settings: { volume: 0.6, sfx: true, music: true, events: true, replay: true, touch: ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) } };
 try {
   const o = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
   if (o) {
@@ -263,12 +301,20 @@ try {
     if (ALL.includes(o.selected)) save.selected = o.selected;
     for (const k of ALL) if (Number.isFinite(o.pts?.[k])) save.pts[k] = clamp(Math.round(o.pts[k]), 0, 2);
     if (Array.isArray(o.unlocked)) save.unlocked = o.unlocked.filter(k => ALL.includes(k));
-    if (o.mode === 2 || o.mode === 3) save.mode = o.mode;
+    if (o.mode >= 2 && o.mode <= 7) save.mode = o.mode;
+    if (o.skins && typeof o.skins === 'object') for (const k of ALL) { const z = o.skins[k]; if (z && Array.isArray(z.own)) { const own = z.own.filter(id => SKIN_IDS.includes(id)); save.skins[k] = { own, sel: own.includes(z.sel) ? z.sel : '' }; } }
+    if (o.p2 === 'random' || ALL.includes(o.p2)) save.p2 = o.p2;
+    if (o.tower && typeof o.tower === 'object') { if (Number.isFinite(o.tower.best)) save.tower.best = clamp(Math.round(o.tower.best), 0, 999); if (Number.isFinite(o.tower.runs)) save.tower.runs = clamp(Math.round(o.tower.runs), 0, 99999); }
     if (Number.isFinite(o.coins)) save.coins = Math.max(0, Math.floor(o.coins));
     for (const p of ['fury', 'speed', 'regen', 'reflex', 'ward', 'vamp', 'ghost', 'giant']) if (Number.isFinite(o.potions?.[p])) save.potions[p] = clamp(Math.round(o.potions[p]), 0, 9);
     for (const k of ALL) if (Number.isFinite(o.armor?.[k])) save.armor[k] = clamp(Math.round(o.armor[k]), 0, 8);
     for (const k of ALL) if (Number.isFinite(o.weapon?.[k])) save.weapon[k] = clamp(Math.round(o.weapon[k]), 0, 5);
     for (const b of ['gold', 'sage']) if (Number.isFinite(o.boost?.[b])) save.boost[b] = clamp(Math.round(o.boost[b]), 0, 3);
+    for (const k of ALL) if (Number.isFinite(o.stars?.[k])) save.stars[k] = clamp(Math.round(o.stars[k]), 0, 5);
+    if (o.ach && typeof o.ach === 'object') for (const id in o.ach) if (o.ach[id] === true) save.ach[id] = true;
+    if (o.stats && typeof o.stats === 'object') { for (const n of ['games', 'wins', 'losses', 'time', 'streak', 'best', 'dmg', 'coins', 'quests']) if (Number.isFinite(o.stats[n])) save.stats[n] = Math.max(0, o.stats[n]);
+      if (o.stats.heroes && typeof o.stats.heroes === 'object') for (const k of ALL) { const h = o.stats.heroes[k]; if (h && Number.isFinite(h.w) && Number.isFinite(h.l)) save.stats.heroes[k] = { w: Math.max(0, h.w | 0), l: Math.max(0, h.l | 0) }; }
+      if (o.stats.f && typeof o.stats.f === 'object') for (const f of ['hard', 'flaw', 'ffa', 'duo', 'nopot']) if (o.stats.f[f] === 1) save.stats.f[f] = 1; }
     if (o.quests && typeof o.quests.slot === 'string' && Array.isArray(o.quests.items) && o.quests.items.length === 3 && o.quests.items.every(q => q && typeof q.k === 'string' && [0, 1, 2].includes(q.tier) && Number.isFinite(q.goal) && Number.isFinite(q.prog))) save.quests = o.quests;
     if (o.offers && typeof o.offers.day === 'string' && Array.isArray(o.offers.items) && o.offers.items.length === 3 && Array.isArray(o.offers.bought)) save.offers = o.offers;
     if (o.arena === 'random' || Object.prototype.hasOwnProperty.call(ARENAS, o.arena)) save.arena = o.arena;
@@ -276,6 +322,8 @@ try {
       if (Number.isFinite(o.settings.volume)) save.settings.volume = clamp(o.settings.volume, 0, 1);
       if (typeof o.settings.sfx === 'boolean') save.settings.sfx = o.settings.sfx;
       if (typeof o.settings.music === 'boolean') save.settings.music = o.settings.music;
+      if (typeof o.settings.events === 'boolean') save.settings.events = o.settings.events;
+      if (typeof o.settings.replay === 'boolean') save.settings.replay = o.settings.replay;
       if (typeof o.settings.touch === 'boolean') save.settings.touch = o.settings.touch;
     }
   }
@@ -354,7 +402,7 @@ function musicTick() {
   if (!actx || actx.state !== 'running') return;
   if (!MUS.master) { MUS.master = actx.createGain(); MUS.master.gain.value = 0; MUS.master.connect(actx.destination); }
   const on = save.settings.music && save.settings.volume > 0 && !document.hidden;
-  const paused = G.state === 'paused', mode = (isPlaying() || paused) ? 'battle' : 'menu';
+  const paused = G.state === 'paused', mode = (isPlaying() || paused || G.state === 'replay') ? 'battle' : 'menu';
   MUS.master.gain.setTargetAtTime(on ? save.settings.volume * .5 * (paused ? .3 : 1) : 0, actx.currentTime, .15);
   if (!on) { MUS.mode = null; return; }
   if (mode !== MUS.mode) musicSwitch(mode);
@@ -527,12 +575,14 @@ const MELEE = new Set(['warrior', 'paladin', 'berserk', 'duelist', 'legion', 'sa
 const CATS = [['all', 'Todos'], ['magia', '✨ Magia'], ['armas', '⚔ Armas'], ['natureza', '🌿 Natureza e bestas'], ['divino', '☀ Sombras e divino']];
 const NEWCLS = new Set(['pyro', 'cryo', 'electro', 'necro', 'illusion', 'shadow', 'arcane', 'wind', 'geo', 'chrono', 'spear', 'berserk', 'duelist', 'crossbow', 'sniper', 'gunslinger', 'legion', 'chain', 'knives', 'samurai', 'wolf', 'bear', 'snake', 'spider', 'treant', 'hawk', 'beekeeper', 'shaman', 'boar', 'nymph', 'reaper', 'vampire', 'cleric', 'angel', 'demon', 'witch', 'monk', 'templar', 'ghost', 'darkknight']);
 const CKEYS = Object.keys(CLASSES);
+// ajuste fino de equilíbrio [vida, dano] (resultado de simulações bot vs bot)
+const BAL = { spear: [1.12, 1.12], chain: [1.1, 1.1], sniper: [1.1, 1.1], geo: [1.06, 1.06], duelist: [1.06, 1.06], treant: [1.06, 1.06], wolf: [1.05, 1.05], ghost: [.92, .92], archer: [.92, .92], cleric: [1.04, 1.04], gunslinger: [.92, .92], wind: [1.08, 1.08], witch: [1.08, 1.08], vampire: [1.06, 1.06], necro: [1.05, 1.05], legion: [.95, .95], templar: [1.02, 1.02], crossbow: [.93, .93], reaper: [1.06, 1.06], berserk: [.96, .96], chrono: [.96, .96], angel: [.94, .94], cryo: [.94, .94] };
 const UNLOCK_OLD = { ninja: 6, paladin: 10, druid: 15, bomber: 21, pyro: 25, cryo: 30, electro: 35, necro: 40, illusion: 45, shadow: 50, arcane: 55, wind: 60, geo: 65, chrono: 70 };
 // ordem de desbloqueio: dos mais simples/básicos aos mais complexos e fortes (começas só com Guerreiro, Mago e Arqueiro)
 const UNLOCK_ORDER = ['spear', 'berserk', 'knives', 'ninja', 'sniper', 'vampire', 'samurai', 'boar', 'chain', 'paladin', 'snake', 'monk', 'duelist', 'pyro', 'templar', 'reaper', 'hawk', 'wind', 'treant', 'bear', 'nymph', 'crossbow', 'druid', 'wolf', 'darkknight', 'gunslinger', 'electro', 'legion', 'bomber', 'geo', 'demon', 'witch', 'cryo', 'spider', 'necro', 'cleric', 'beekeeper', 'shaman', 'angel', 'shadow', 'arcane', 'ghost', 'illusion', 'chrono'];
 const UNLOCK_SCHED = [9, 15, 23, 32, 38, 45, 53, 60, 68, 75, 83, 90, 98, 105, 112, 118, 124, 130, 136, 142, 148, 154, 160, 166, 171, 176, 181, 186, 191, 196, 201, 206, 211, 216, 221, 226, 231, 236, 241, 246, 251, 256, 261, 266];
 const UNLOCK = Object.fromEntries(UNLOCK_ORDER.map((k, i) => [k, UNLOCK_SCHED[i]]));
-const progress = () => 3 + CKEYS.reduce((t, k) => t + save.levels[k] - 1, 0);
+const progress = () => 3 + CKEYS.reduce((t, k) => t + save.levels[k] - 1 + 9 * (save.stars[k] | 0), 0);
 if (!Array.isArray(save.unlocked)) save.unlocked = Object.keys(UNLOCK_OLD).filter(k => progress() >= UNLOCK_OLD[k]); // quem já tinha desbloqueado mantém
 const refreshUnlocks = () => { for (const k in UNLOCK) if (progress() >= UNLOCK[k] && !save.unlocked.includes(k)) save.unlocked.push(k); };
 refreshUnlocks();
@@ -582,20 +632,21 @@ function nearFoe(team, x, y) {
 const opp = f => nearFoe(f.team, f.x, f.y);
 
 function mkFighter(cls, lvl, x, y, dmgExtra = 1) {
-  const c = CLASSES[cls], m = lvlMods(lvl), hp = Math.round(c.hp * m.hp);
-  return { team: 0, cls, c, lvl, x, y, vx: 0, vy: 0, kx: 0, ky: 0, r: c.r, maxhp: hp, hp, dmgMul: m.dmg * dmgExtra, spCd: c.special.cd * m.sp,
-    aim: 0, cdB: 0, cdS: .8, dashT: 0, dashA: 0, dashHit: false, flash: 0, swing: 0, wins: 0, mx: 0, my: 0, ai: null, D: null, bump: false, shield: 0, inv: 0, slowT: 0, healT: 0, dashSpd: 720, dashDmg: 0, aimDist: 200, hz: 0, ivx: 0, ivy: 0, buf: { fury: 0, speed: 0, regen: 0, reflex: 0, ward: 0, vamp: 0, ghost: 0, giant: 0 }, armor: 0, armSpd: 0, thorns: 0, armRegen: 0, armCdr: 0, absorb: 0, giant: false, r0: c.r, gAdd: 0, reflT: 0, curseT: 0, auraT: 0, auraTick: 0, baseDmg: m.dmg * dmgExtra, burn: null, rootT: 0, stunT: 0, pullT: 0, puller: null, hist: [], histT: 0, dashFx: null };
+  const c = CLASSES[cls], m = lvlMods(lvl), bl = BAL[cls] || [1, 1], hp = Math.round(c.hp * m.hp * bl[0]);
+  return { team: 0, cls, c, lvl, x, y, vx: 0, vy: 0, kx: 0, ky: 0, r: c.r, maxhp: hp, hp, dmgMul: m.dmg * dmgExtra * bl[1], spCd: c.special.cd * m.sp,
+    aim: 0, cdB: 0, cdS: .8, dashT: 0, dashA: 0, dashHit: false, flash: 0, swing: 0, wins: 0, mx: 0, my: 0, ai: null, D: null, bump: false, shield: 0, inv: 0, slowT: 0, healT: 0, dashSpd: 720, dashDmg: 0, aimDist: 200, hz: 0, ivx: 0, ivy: 0, buf: { fury: 0, speed: 0, regen: 0, reflex: 0, ward: 0, vamp: 0, ghost: 0, giant: 0 }, armor: 0, armSpd: 0, thorns: 0, armRegen: 0, armCdr: 0, absorb: 0, giant: false, r0: c.r, gAdd: 0, reflT: 0, curseT: 0, auraT: 0, auraTick: 0, baseDmg: m.dmg * dmgExtra * bl[1], burn: null, rootT: 0, stunT: 0, pullT: 0, puller: null, hist: [], histT: 0, dashFx: null };
 }
 const SP3 = [[140, 210], [820, 210], [140, 430], [820, 430]], FFA_COL = ['#5aa8ff', '#ff6a5a', '#ffb03a', '#c07aff'];
 // equipamento (armadura + arma) aplicado a qualquer lutador; os bots usam o equivalente ao do jogador
-function applyGear(f, at, wt) {
+function applyGear(f, at, wt, st = 0) {
   const ar = at > 0 ? ARMORS[at - 1] : null, w = wt > 0 ? WEAPONS[wt - 1] : null;
   f.armor = ar ? ar.red : 0; f.armSpd = ar ? ar.spd || 0 : 0; f.thorns = ar ? ar.thorns || 0 : 0; f.armRegen = ar ? ar.regen || 0 : 0; f.armCdr = (ar ? ar.cdr || 0 : 0) + (w ? w.cdr : 0);
   if (ar && ar.hp) { f.maxhp = Math.round(f.maxhp * (1 + ar.hp)); f.hp = f.maxhp; }
   if (w) { f.baseDmg *= 1 + w.dmg; f.dmgMul = f.baseDmg; f.rngMul = 1 + w.rng; f.wFire = !!w.fire; } else { f.rngMul = 1; f.wFire = false; }
-  f.armT = at; f.wT = wt;
+  if (st > 0) { f.baseDmg *= 1 + .03 * st; f.dmgMul = f.baseDmg; f.maxhp = Math.round(f.maxhp * (1 + .03 * st)); f.hp = f.maxhp; }
+  f.armT = at; f.wT = wt; f.stars = st;
 }
-function botTiers(diff, a0, w0) { return diff === 'easy' ? [a0 >> 1, w0 >> 1] : diff === 'hard' ? [Math.min(8, a0 + 1), Math.min(5, w0 + 1)] : [a0, w0]; }
+function botTiers(diff, a0, w0, s0 = 0) { return diff === 'easy' ? [a0 >> 1, w0 >> 1, s0 >> 1] : diff === 'hard' ? [Math.min(8, a0 + 1), Math.min(5, w0 + 1), s0 > 0 ? Math.min(5, s0 + 1) : 0] : [a0, w0, s0]; }
 function resetRound() {
   const cnt = [0, 0], ys = G.mode === 2 ? [210, 430] : [320];
   for (const f of G.fs) {
@@ -605,15 +656,22 @@ function resetRound() {
     f.x = x; f.y = y; f.vx = f.vy = f.kx = f.ky = 0; f.hp = f.maxhp; f.aim = aim; f.cdB = 0; f.cdS = .8;
     f.reflT = f.curseT = f.auraT = 0; f.dashT = 0; f.flash = 0; f.swing = 0; f.mx = f.my = 0; f.ai = null; f.bump = false; f.shield = f.inv = f.slowT = f.healT = 0; if (f.giant) setGiant(f, false); for (const bk in f.buf) f.buf[bk] = 0; f.absorb = 0; f.hz = f.ivx = f.ivy = 0; f.burn = null; f.rootT = f.stunT = f.pullT = 0; f.hist.length = 0; f.histT = 0;
   }
-  G.projs.length = 0; G.bombs.length = 0; G.sums.length = 0; G.walls.length = 0; G.tempP.length = 0; G.parts.length = 0; G.texts.length = 0; G.fx.length = 0;
-  G.state = 'countdown'; G.cd = 2.6; G.lastNum = 0; G.fightT = 0; G.sdT = 0; G.hole = null; if (ARENA.hole) holeReset(); G.winner = null; wantSp = false; G.spec = false; $('bSkip').classList.remove('on');
+  G.rec = []; G.recT = 0; G.projs.length = 0; G.bombs.length = 0; G.sums.length = 0; G.walls.length = 0; G.tempP.length = 0; G.parts.length = 0; G.texts.length = 0; G.fx.length = 0;
+  evReset(); G.state = 'countdown'; G.cd = 2.6; G.lastNum = 0; G.fightT = 0; G.sdT = 0; G.hole = null; if (ARENA.hole) holeReset(); G.winner = null; wantSp = false; G.spec = false; $('bSkip').classList.remove('on');
 }
 function startMatch(diff) {
-  G.potUsed = 0; G.rndArena = save.arena === 'random'; G.diff = diff; G.mode = save.mode === 2 ? 2 : save.mode === 3 ? 3 : 1; G.tw = [0, 0, 0, 0]; const D = DIFF[diff], BL = diff === 'normal' ? save.levels[save.selected] : D.botLvl;
+  G.tn = null; G.sim = false;
+  if (save.mode === 7) { startTournament(diff); return; }
+  if (save.mode === 6) diff = 'normal'; G.local = save.mode === 5 ? 'coop' : save.mode === 6 ? 'duel' : null; G.p2 = null; wantSp2 = false;
+  G.potUsed = 0; G.rndArena = save.arena === 'random'; G.diff = diff; G.mode = save.mode === 2 || save.mode === 5 ? 2 : save.mode === 3 ? 3 : 1; G.tw = [0, 0, 0, 0]; G.tower = save.mode === 4 ? { floor: 1, lives: 3, hp: 0, heal: 0, picks: [], keep: 0 } : null; if (G.tower) diff = G.diff = 'easy'; const D = DIFF[diff], BL = diff === 'normal' || G.local ? save.levels[save.selected] : D.botLvl;
   { const ks = Object.keys(ARENAS); setArena(save.arena === 'random' ? ks[Math.floor(Math.random() * ks.length)] : save.arena); }
   const others = CKEYS.filter(k => k !== save.selected);
   for (let i = others.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [others[i], others[j]] = [others[j], others[i]]; }
   G.botCls = others[0]; G.allyCls = others[1]; G.botCls2 = others[2];
+  if (G.local && save.p2 !== 'random' && CKEYS.includes(save.p2) && isUnlocked(save.p2) && save.p2 !== save.selected) {
+    const pk = save.p2, o2 = others.filter(k => k !== pk);
+    if (G.local === 'duel') G.botCls = pk; else { G.allyCls = pk; G.botCls = o2[0]; G.botCls2 = o2[1]; }
+  }
   G.player = mkFighter(save.selected, save.levels[save.selected], 140, 320);
   G.bot = mkFighter(G.botCls, BL, 820, 320, D.dmg); G.bot.team = 1;
   G.bot.D = D; G.player.D = DIFF.normal; G.fs = [G.player, G.bot];
@@ -625,20 +683,129 @@ function startMatch(diff) {
     const b2 = mkFighter(G.allyCls, BL, 820, 320, D.dmg), b3 = mkFighter(G.botCls2, BL, 820, 320, D.dmg);
     b2.team = 2; b3.team = 3; b2.D = D; b3.D = D; G.bot2 = b2; G.bot3 = b3; G.fs = [G.player, G.bot, b2, b3];
   }
-  { const a0 = save.armor[save.selected] | 0, w0 = save.weapon[save.selected] | 0; applyGear(G.player, a0, w0);
-    const [ba, bw] = botTiers(diff, a0, w0); for (const f of G.fs) if (f !== G.player) applyGear(f, ba, bw); }
+  { const a0 = save.armor[save.selected] | 0, w0 = save.weapon[save.selected] | 0; const s0 = save.stars[save.selected] | 0; applyGear(G.player, a0, w0, s0);
+    const [ba, bw, bs] = botTiers(diff, a0, w0, s0); for (const f of G.fs) if (f !== G.player) applyGear(f, ba, bw, bs); }
+  if (G.local) { for (const f of G.fs) applyGear(f, 0, 0, 0); G.p2 = G.local === 'coop' ? G.ally : G.bot; G.p2.D = DIFF.normal; }
+  if (G.tower) { G.rndArena = save.arena === 'random'; towerSpawn(); }
+  G.player.skin = (save.skins[save.selected] || {}).sel || '';
   G.round = 1; showScreen(null); resetRound(); setPlayUI(true);
+}
+/* ---------- TORNEIO LOCAL ---------- */
+const shuf = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pname = p => `${p.who ? p.who.toUpperCase() : 'Bot'} · ${CLASSES[p.cls].name}`;
+const TN_ST = ['Meia-final 1', 'Meia-final 2', 'Final'];
+function startTournament(diff) {
+  G.tower = null; G.mode = 1; G.diff = diff; G.local = 'tourney'; G.p2 = null; G.autoplay = false; G.rndArena = false;
+  const pk = save.p2 !== 'random' && CKEYS.includes(save.p2) && isUnlocked(save.p2) && save.p2 !== save.selected ? save.p2 : null, pool = shuf(CKEYS.filter(k => k !== save.selected && k !== pk)), c2 = pk || pool.pop();
+  const ps = shuf([{ cls: save.selected, who: 'j1' }, { cls: c2, who: 'j2' }, { cls: pool[0], who: null }, { cls: pool[1], who: null }]);
+  G.tn = { ps, stage: 0, win: [], hist: [], lvl: save.levels[save.selected], D: DIFF[diff], cur: null };
+  tnShow();
+}
+const tnMatch = () => { const T = G.tn; return T.stage === 0 ? [T.ps[0], T.ps[1]] : T.stage === 1 ? [T.ps[2], T.ps[3]] : [T.win[0], T.win[1]]; };
+function tnShow() {
+  const T = G.tn; G.state = 'matchEnd'; setPlayUI(false); $('pauseBtn').classList.remove('on');
+  const body = $('brBody'); body.innerHTML = '';
+  const line = (title, a, b, h) => { const d = document.createElement('div'); d.className = 'chip'; d.style.cssText = 'display:block;text-align:center;min-width:320px'; d.innerHTML = `<b>${title}</b><br>${a ? pname(a) : '?'} vs ${b ? pname(b) : '?'}${h ? `<br>✔ ${pname(h[2])} (${h[3]}–${h[4]})` : ''}`; body.appendChild(d); };
+  line(TN_ST[0], T.ps[0], T.ps[1], T.hist[0]); line(TN_ST[1], T.ps[2], T.ps[3], T.hist[1]); line(TN_ST[2], T.win[0], T.win[1], T.hist[2]);
+  const [a, b] = tnMatch(), hum = a.who || b.who;
+  $('brSub').textContent = `Próximo: ${TN_ST[T.stage]} — ${pname(a)} vs ${pname(b)} (melhor de 3)`;
+  $('brGo').textContent = hum ? '▶ Começar jogo' : '👁 Ver jogo'; $('brSim').style.display = hum ? 'none' : '';
+  showScreen('s-bracket');
+}
+function tnPlay() {
+  const T = G.tn, [a, b] = tnMatch(), D = T.D; T.cur = [a, b];
+  { const ks = Object.keys(ARENAS); setArena(save.arena === 'random' ? ks[Math.floor(Math.random() * ks.length)] : save.arena); }
+  const mk = (p, x, team) => { const f = mkFighter(p.cls, T.lvl, x, 320, p.who ? 1 : D.dmg); f.team = team; f.who = p.who; f.D = p.who ? DIFF.normal : D; f.skin = ''; applyGear(f, 0, 0, 0); return f; };
+  G.player = mk(a, 140, 0); G.bot = mk(b, 820, 1); G.fs = [G.player, G.bot]; G.bot2 = G.bot3 = null; G.botCls = b.cls; G.allyCls = a.cls; G.tw = [0, 0, 0, 0]; G.round = 1; G.sim = false; G.autoplay = false;
+  showScreen(null); resetRound(); setPlayUI(true);
+}
+function tnMatchEnd() {
+  const T = G.tn, [a, b] = T.cur, w = G.tw[0] >= 2 ? a : b; T.win.push(w); T.hist.push([a, b, w, G.tw[0], G.tw[1]]); T.stage++;
+  G.state = 'matchEnd'; setPlayUI(false); $('pauseBtn').classList.remove('on');
+  if (T.stage < 3) { tnShow(); return; }
+  $('resTitle').textContent = `🏆 ${pname(w)} É CAMPEÃO!`; $('resTitle').className = 'big win';
+  $('resSub').textContent = `Torneio local · ${T.D.label}`;
+  $('resLvl').innerHTML = T.hist.map((h, i) => `${TN_ST[i]}: ${pname(h[0])} ${h[3]}–${h[4]} ${pname(h[1])}`).join('<br>') + '<br>Modo local: sem moedas, níveis nem estatísticas.';
+  showScreen('result');
+}
+function tnTick(f) {
+  const e = opp(f); if (e) { f.aim = Math.atan2(e.y - f.y, e.x - f.x); f.aimDist = Math.hypot(e.x - f.x, e.y - f.y); }
+  const j1 = f.who === 'j1', K = keys;
+  const mx = j1 ? (K['d'] ? 1 : 0) - (K['a'] ? 1 : 0) : (K['arrowright'] ? 1 : 0) - (K['arrowleft'] ? 1 : 0), my = j1 ? (K['s'] ? 1 : 0) - (K['w'] ? 1 : 0) : (K['arrowdown'] ? 1 : 0) - (K['arrowup'] ? 1 : 0);
+  f.mx = mx; f.my = my; const sp = j1 ? wantSp : wantSp2; if (j1) wantSp = false; else wantSp2 = false;
+  if (j1 ? (K['j'] || mouseDown) : K['enter']) doAttack(f);
+  if (sp) doSpecial(f, (mx || my) ? Math.atan2(my, mx) : f.aim);
+}
+/* ---------- TORRE ---------- */
+const towerPay = f => (12 + 4 * f) * (f % 5 === 0 ? 2 : 1);
+function towerSpawn() {
+  const T = G.tower, f = T.floor, boss = f % 5 === 0, prof = f <= 3 ? 'easy' : f <= 8 ? 'normal' : 'hard', D = DIFF[prof];
+  const others = CKEYS.filter(k => k !== save.selected); G.botCls = others[Math.floor(Math.random() * others.length)];
+  if (G.rndArena && f > 1) { const ks = Object.keys(ARENAS); setArena(ks[Math.floor(Math.random() * ks.length)]); }
+  const lvl = Math.min(10, 1 + Math.floor((f - 1) * 0.6)), b = mkFighter(G.botCls, lvl, 820, 320, Math.min(2, D.dmg * (1 + .025 * (f - 1))));
+  b.team = 1; b.D = D; G.diff = prof;
+  applyGear(b, Math.min(8, Math.floor((f - 1) / 3)), Math.min(5, Math.floor((f - 1) / 4)), 0);
+  b.boss = boss; if (boss) { b.maxhp = Math.round(b.maxhp * 1.8); b.hp = b.maxhp; b.dmgMul *= 1.15; b.baseDmg = (b.baseDmg || 1) * 1.15; }
+  G.bot = b; G.fs = [G.player, b]; G.bot2 = G.bot3 = null;
+}
+function towerNext(won) {
+  const T = G.tower, P = G.player; G.tw = [0, 0, 0, 0]; P.wins = 0; G.bot.wins = 0;
+  if (won) {
+    qEvent('floor', 1, { floor: T.floor }); if (T.floor > save.tower.best) save.tower.best = T.floor; persist(); checkAch();
+    const keep = Math.min(P.maxhp, P.hp + P.maxhp * (.35 + T.heal)); T.floor++; towerSpawn();
+    if ((T.floor - 1) % 5 === 0) { T.keep = keep; towerPick(); } else { resetRound(); P.hp = keep; }
+  } else {
+    T.lives--; if (T.lives <= 0) { endTowerRun(); return; }
+    resetRound(); P.hp = Math.max(P.maxhp * .6, 1); toast('💔 Perdeste uma vida. Tenta o andar outra vez!', 2200);
+  }
+}
+const TBON = [{ k: 'hp', i: '❤', n: 'Coração de pedra', d: '+20% de vida máxima (e cura essa vida)' }, { k: 'dmg', i: '⚔', n: 'Fúria da torre', d: '+15% de dano' },
+  { k: 'arm', i: '🛡', n: 'Pele de ferro', d: '+10% de redução de dano (máx. 60%)' }, { k: 'cd', i: '⚡', n: 'Foco arcano', d: 'Ataque e especial recarregam 20% mais depressa' },
+  { k: 'spd', i: '💨', n: 'Pés de vento', d: '+10% de velocidade' }, { k: 'heal', i: '🩸', n: 'Sede de sangue', d: '+15% de vida recuperada ao subir de andar' }, { k: 'life', i: '💗', n: 'Segunda chance', d: '+1 vida (máx. 5)' }];
+function towerApply(b) {
+  const T = G.tower, P = G.player;
+  if (b.k === 'hp') { const d = Math.round(P.maxhp * .2); P.maxhp += d; T.keep += d; }
+  else if (b.k === 'dmg') { P.baseDmg *= 1.15; P.dmgMul = P.baseDmg; }
+  else if (b.k === 'arm') P.armor = Math.min(.6, P.armor + .1);
+  else if (b.k === 'cd') P.armCdr += .2;
+  else if (b.k === 'spd') P.armSpd += .1;
+  else if (b.k === 'heal') T.heal += .15;
+  else if (b.k === 'life') T.lives = Math.min(5, T.lives + 1);
+  T.picks.push(b.i);
+}
+function towerPick() {
+  const T = G.tower, pool = TBON.filter(b => !(b.k === 'life' && T.lives >= 5) && !(b.k === 'arm' && G.player.armor >= .6)), opts = [];
+  while (opts.length < 3 && pool.length) opts.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  const done = b => { towerApply(b); resetRound(); G.player.hp = Math.min(G.player.maxhp, T.keep); showScreen(null); SFX.lvl(); };
+  G.state = 'towerPick';
+  if (G.autoplay) { done(opts[Math.floor(Math.random() * opts.length)]); return; }
+  $('tpickSub').textContent = `Andar ${T.floor - 1} superado! Escolhe um bónus que fica até ao fim da subida.` + (T.picks.length ? '  Já tens: ' + T.picks.join(' ') : '');
+  const body = $('tpickBody'); body.innerHTML = '';
+  for (const b of opts) { const el = document.createElement('button'); el.className = 'btn'; el.innerHTML = `<span class="diffbtn">${b.i} ${b.n}<small>${b.d}</small></span>`; el.addEventListener('click', () => { audio(); done(b); }); body.appendChild(el); }
+  showScreen('s-tpick');
+}
+function endTowerRun() {
+  const T = G.tower, cleared = T.floor - 1; let pay = 0; for (let f = 1; f <= cleared; f++) pay += towerPay(f);
+  const gold = pay > 0 && save.boost.gold > 0; if (gold) { save.boost.gold--; pay *= 2; }
+  G.state = 'matchEnd'; G.spec = false; setPlayUI(false); $('pauseBtn').classList.remove('on');
+  const rec = cleared > 0 && cleared >= save.tower.best; if (!G.autoplay) { save.tower.runs++; save.coins += pay; save.stats.coins += pay; if (cleared > save.tower.best) save.tower.best = cleared; persist(); checkAch(); }
+  $('resTitle').textContent = cleared ? `TORRE — ${cleared} ANDAR${cleared === 1 ? '' : 'ES'}` : 'TORRE — CAÍSTE LOGO'; $('resTitle').className = 'big ' + (cleared >= 5 ? 'win' : 'lose');
+  $('resSub').textContent = `${CLASSES[save.selected].name} · Torre · recorde: andar ${save.tower.best}`;
+  $('resLvl').innerHTML = (rec && cleared > 0 ? '🏆 Novo recorde!<br>' : '') + (cleared ? `🪙 +${pay} moedas (${cleared} andar${cleared === 1 ? '' : 'es'}${Math.floor(cleared / 5) ? ', ' + Math.floor(cleared / 5) + ' chefe' + (cleared >= 10 ? 's' : '') : ''}${gold ? ' · ×2 Poção Dourada' : ''})<br>saldo: ${save.coins}` : 'Nenhum andar superado, sem moedas desta vez.');
+  showScreen('result');
 }
 
 /* ---------- INPUT ---------- */
-const keys = {}; let mouse = { x: W / 2, y: H / 2 }, mouseSeen = false, mouseDown = false, wantSp = false;
+const keys = {}; let mouse = { x: W / 2, y: H / 2 }, mouseSeen = false, mouseDown = false, wantSp = false, wantSp2 = false;
 const touch = { mx: 0, my: 0, atk: false, active: false };
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
-  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && G.state !== 'menu') e.preventDefault();
+  if (G.state === 'replay') { e.preventDefault(); endReplay(); return; }
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'enter'].includes(k) && G.state !== 'menu') e.preventDefault();
   if (e.repeat) { keys[k] = true; return; }
   keys[k] = true;
   if (k === ' ' || k === 'k') wantSp = true;
+  if (k === 'shift') wantSp2 = true;
   if (k.length === 1 && k >= '1' && k <= '8') drinkIdx(+k - 1);
   if (k === 'p') togglePause();
   if (k === 'escape') escBack();
@@ -647,6 +814,7 @@ addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; mouseDown = false; if (isPlaying()) pauseGame(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && isPlaying()) pauseGame(); });
 cv.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; const r = cv.getBoundingClientRect(); mouse.x = (e.clientX - r.left) * W / r.width; mouse.y = (e.clientY - r.top) * H / r.height; mouseSeen = true; });
+addEventListener('pointerdown', () => { if (G.state === 'replay') endReplay(); });
 cv.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; audio(); mouseDown = true; });
 addEventListener('pointerup', e => { if (e.pointerType === 'mouse') mouseDown = false; });
 cv.addEventListener('contextmenu', e => { e.preventDefault(); });
@@ -676,14 +844,14 @@ bA.addEventListener('pointerup', atkUp); bA.addEventListener('pointercancel', at
 bS.addEventListener('pointerdown', e => { e.preventDefault(); audio(); wantSp = true; });
 
 /* ---------- SCREENS ---------- */
-const screens = ['s-menu', 's-char', 's-diff', 's-shop', 's-quests', 's-set', 's-pause', 'result', 's-bye'];
+const screens = ['s-menu', 's-char', 's-diff', 's-shop', 's-quests', 's-stats', 's-set', 's-pause', 's-tpick', 's-bracket', 'result', 's-bye'];
 let curScreen = 's-menu';
 function escBack() {
   if (isPlaying() || G.state === 'paused') { togglePause(); return; }
   if (curScreen === 'result') { SFX.click(); toMenu(); return; }
-  if (['s-char', 's-diff', 's-shop', 's-quests', 's-set', 's-bye'].includes(curScreen)) { SFX.click(); showScreen('s-menu'); }
+  if (['s-char', 's-diff', 's-shop', 's-quests', 's-stats', 's-set', 's-bye'].includes(curScreen)) { SFX.click(); showScreen('s-menu'); }
 }
-function showScreen(id) { curScreen = id; for (const s of screens) $(s).classList.toggle('hidden', s !== id); if (id === 's-menu') refreshMenu(); if (id === 's-char') renderCards(); if (id === 's-set') syncSettings(); if (id === 's-diff') { renderModeRow(); renderArenaRow(); } if (id === 's-shop') renderShop(); if (id === 's-quests') renderQuests(); }
+function showScreen(id) { curScreen = id; for (const s of screens) $(s).classList.toggle('hidden', s !== id); if (id === 's-menu') refreshMenu(); if (id === 's-char') renderCards(); if (id === 's-set') syncSettings(); if (id === 's-diff') { renderModeRow(); renderArenaRow(); } if (id === 's-shop') renderShop(); if (id === 's-quests') renderQuests(); if (id === 's-stats') renderStats(); }
 const isPlaying = () => ['countdown', 'fight', 'roundEnd'].includes(G.state);
 function setPlayUI(on) {
   $('pauseBtn').classList.toggle('on', on); $('bSkip').classList.toggle('on', on && !!G.spec);
@@ -693,8 +861,8 @@ function setPlayUI(on) {
 function pauseGame() { if (!isPlaying()) return; { const h = heroSplit(G.player.cls); $('pauseHero').innerHTML = `<b style="color:${CLASSES[G.player.cls].color}">${CLASSES[G.player.cls].name}</b><br>🗡 <b>Ataque</b> (clique): ${h.atk}<br>✨ <b>Especial</b> (Espaço / botão direito): ${h.sp}`; } G.prevState = G.state; G.state = 'paused'; showScreen('s-pause'); setPlayUI(false); $('pauseBtn').classList.remove('on'); }
 function resumeGame() { if (G.state !== 'paused') return; G.state = G.prevState; showScreen(null); setPlayUI(true); }
 function togglePause() { if (G.state === 'paused') resumeGame(); else pauseGame(); }
-function toMenu() { G.state = 'menu'; G.projs.length = 0; G.bombs.length = 0; G.sums.length = 0; G.walls.length = 0; G.tempP.length = 0; setPlayUI(false); showScreen('s-menu'); }
-function refreshMenu() { ensureQuests(); updateQBadge(); const c = CLASSES[save.selected]; $('heroChip').innerHTML = `Herói atual: <b>${c.name}</b> · Nível <b>${save.levels[save.selected]}</b> · 🪙 <b>${save.coins}</b>`; }
+function toMenu() { G.tn = null; G.state = 'menu'; G.projs.length = 0; G.bombs.length = 0; G.sums.length = 0; G.walls.length = 0; G.tempP.length = 0; setPlayUI(false); showScreen('s-menu'); }
+function refreshMenu() { ensureQuests(); updateQBadge(); checkAch(); const c = CLASSES[save.selected]; $('heroChip').innerHTML = `Herói atual: <b>${c.name}${save.stars[save.selected] ? ' ' + '★'.repeat(save.stars[save.selected]) : ''}</b> · Nível <b>${save.levels[save.selected]}</b> · 🪙 <b>${save.coins}</b>`; }
 
 const btn = (id, fn) => $(id).addEventListener('click', () => { audio(); SFX.click(); fn(); });
 btn('bPlay', () => { $('diffHero').textContent = `${CLASSES[save.selected].name} · Nível ${save.levels[save.selected]}`; showScreen('s-diff'); });
@@ -706,13 +874,13 @@ btn('bShopBack', () => showScreen('s-menu'));
 const QTIER = [{ n: 'Fácil', coins: 40, col: '#3dbd6b' }, { n: 'Média', coins: 100, col: '#f2c14e' }, { n: 'Difícil', coins: 250, col: '#e5533d' }];
 const QPOOL = [
   [{ k: 'win', goal: 2 }, { k: 'play', goal: 3 }, { k: 'dmg', goal: 400 }, { k: 'potion', goal: 2 }, { k: 'special', goal: 8 }],
-  [{ k: 'win', goal: 3 }, { k: 'win_m2', goal: 1 }, { k: 'win_nh', goal: 1 }, { k: 'special', goal: 20 }, { k: 'dmg', goal: 1500 }, { k: 'potion', goal: 4 }],
-  [{ k: 'win_hard', goal: 1 }, { k: 'win_nopot', goal: 1 }, { k: 'win_flaw', goal: 1 }, { k: 'win_m3', goal: 1 }, { k: 'win_hero', goal: 1 }]];
+  [{ k: 'win', goal: 3 }, { k: 'win_m2', goal: 1 }, { k: 'win_nh', goal: 1 }, { k: 'special', goal: 20 }, { k: 'dmg', goal: 1500 }, { k: 'potion', goal: 4 }, { k: 'tower', goal: 4 }],
+  [{ k: 'win_hard', goal: 1 }, { k: 'win_nopot', goal: 1 }, { k: 'win_flaw', goal: 1 }, { k: 'win_m3', goal: 1 }, { k: 'win_hero', goal: 1 }, { k: 'tower', goal: 8 }]];
 function qText(q) {
   const g = q.goal, pl = g === 1 ? '' : 's';
   return ({ win: `Ganha ${g} partida${pl}`, play: `Joga ${g} partida${pl} até ao fim`, dmg: `Causa ${g} de dano aos inimigos`, potion: `Bebe ${g} poç${g === 1 ? 'ão' : 'ões'} em combate`, special: `Usa a habilidade especial ${g} vezes`,
     win_m2: 'Ganha 1 partida de 2 vs 2', win_nh: 'Ganha 1 partida no Normal ou no Difícil', win_hard: 'Ganha 1 partida no Difícil', win_nopot: 'Ganha 1 partida sem beber poções',
-    win_flaw: 'Ganha 1 partida sem perderes nenhuma ronda', win_m3: 'Ganha 1 Batalha solitária (1 vs 3)', win_hero: `Ganha 1 partida com o ${CLASSES[q.hero] ? CLASSES[q.hero].name : 'herói'}` })[q.k] || q.k;
+    win_flaw: 'Ganha 1 partida sem perderes nenhuma ronda', win_m3: 'Ganha 1 Batalha solitária (1 vs 3)', tower: `Chega ao andar ${g} da Torre`, win_hero: `Ganha 1 partida com o ${CLASSES[q.hero] ? CLASSES[q.hero].name : 'herói'}` })[q.k] || q.k;
 }
 const qSlot = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + '-' + Math.floor(d.getHours() / 6); };
 let toastT = 0;
@@ -730,7 +898,7 @@ function ensureQuests() {
 const qReady = () => !!(save.quests && save.quests.items.some(q => q.prog >= q.goal && !q.claimed));
 function updateQBadge() { $('qBadge').classList.toggle('on', qReady()); }
 function qEvent(kind, n = 1, info = {}) {
-  if (G.autoplay) return; const Q = ensureQuests(); let changed = false;
+  if (G.autoplay || G.local) return; const Q = ensureQuests(); let changed = false;
   for (const q of Q.items) {
     if (q.prog >= q.goal) continue; let add = 0;
     const k = q.k;
@@ -738,6 +906,7 @@ function qEvent(kind, n = 1, info = {}) {
     else if (kind === 'sp') { if (k === 'special') add = 1; }
     else if (kind === 'pot') { if (k === 'potion') add = 1; }
     else if (kind === 'match') { if (k === 'play') add = 1; }
+    else if (kind === 'floor') { if (k === 'tower' && info.floor > q.prog) add = info.floor - q.prog; }
     else if (kind === 'win') {
       if (k === 'win' || (k === 'win_m2' && info.mode === 2) || (k === 'win_m3' && info.mode === 3) || (k === 'win_nh' && info.diff !== 'easy') || (k === 'win_hard' && info.diff === 'hard')
         || (k === 'win_nopot' && info.pots === 0) || (k === 'win_flaw' && info.flaw) || (k === 'win_hero' && info.cls === q.hero)) add = 1;
@@ -753,13 +922,74 @@ function renderQuests() {
     d.innerHTML = `<div><span class="qt">${T.n}</span><b>${qText(q)}</b><div class="qbar"><i style="width:${Math.round(q.prog / q.goal * 100)}%"></i></div><small>${Math.min(q.prog, q.goal)} / ${q.goal}</small></div><span class="qrew">🪙 ${T.coins}</span>`;
     const b = document.createElement('button'); b.className = 'btn small' + (done && !q.claimed ? ' primary' : ''); b.disabled = q.claimed || !done;
     b.textContent = q.claimed ? '✔ Resgatada' : done ? 'Resgatar recompensa' : 'Em curso';
-    b.addEventListener('click', () => { audio(); q.claimed = true; save.coins += T.coins; persist(); buySfx(); toast(`🎉 Resgataste a recompensa da missão! Recebeste +${T.coins} moedas`); renderQuests(); updateQBadge(); });
+    b.addEventListener('click', () => { audio(); q.claimed = true; save.stats.quests++; checkAch(); save.coins += T.coins; persist(); buySfx(); toast(`🎉 Resgataste a recompensa da missão! Recebeste +${T.coins} moedas`); renderQuests(); updateQBadge(); });
     d.appendChild(b); body.appendChild(d);
   });
   const nx = new Date(); nx.setHours((Math.floor(nx.getHours() / 6) + 1) * 6, 0, 0, 0); const ms = nx - Date.now(), h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000) + 1;
   $('qTimer').textContent = `Renova em ${m === 60 ? h + 1 : h}h ${String(m === 60 ? 0 : m).padStart(2, '0')}min · às 00h, 06h, 12h e 18h`;
 }
 btn('bQuests', () => showScreen('s-quests'));
+/* ---------- ESTATÍSTICAS E CONQUISTAS ---------- */
+const stC = k => save.stats.heroes[k] ? save.stats.heroes[k].w : 0;
+const ACH = [
+  { id: 'first', n: 'Primeira vitória', d: 'Ganha 1 partida', r: 50, cur: () => save.stats.wins, g: 1 },
+  { id: 'w10', n: 'Veterano', d: 'Ganha 10 partidas', r: 100, cur: () => save.stats.wins, g: 10 },
+  { id: 'w50', n: 'Campeão', d: 'Ganha 50 partidas', r: 250, cur: () => save.stats.wins, g: 50 },
+  { id: 'w200', n: 'Lenda da arena', d: 'Ganha 200 partidas', r: 600, cur: () => save.stats.wins, g: 200 },
+  { id: 's5', n: 'Em chamas', d: '5 vitórias seguidas', r: 150, cur: () => save.stats.best, g: 5 },
+  { id: 'tw5', n: 'Aprendiz da Torre', d: 'Chega ao andar 5 da Torre', r: 150, cur: () => save.tower.best, g: 5 },
+  { id: 'tw10', n: 'Escalador', d: 'Chega ao andar 10 da Torre', r: 400, cur: () => save.tower.best, g: 10 },
+  { id: 'tw20', n: 'Senhor da Torre', d: 'Chega ao andar 20 da Torre', r: 1000, cur: () => save.tower.best, g: 20 },
+  { id: 'skin1', n: 'Estilo próprio', d: 'Compra a tua primeira skin', r: 100, cur: () => skinCount(), g: 1 },
+  { id: 'skin5', n: 'Fashionista', d: 'Compra 5 skins', r: 400, cur: () => skinCount(), g: 5 },
+  { id: 's10', n: 'Imparável', d: '10 vitórias seguidas', r: 400, cur: () => save.stats.best, g: 10 },
+  { id: 'h10', n: 'Mestre de heróis', d: 'Ganha com 10 heróis diferentes', r: 200, cur: () => CKEYS.filter(k => stC(k) > 0).length, g: 10 },
+  { id: 'h25', n: 'Colecionador', d: 'Ganha com 25 heróis diferentes', r: 500, cur: () => CKEYS.filter(k => stC(k) > 0).length, g: 25 },
+  { id: 'hard', n: 'Duro de roer', d: 'Ganha uma partida no Difícil', r: 200, cur: () => save.stats.f.hard | 0, g: 1 },
+  { id: 'flaw', n: 'Sem arranhões', d: 'Ganha sem perder nenhuma ronda', r: 100, cur: () => save.stats.f.flaw | 0, g: 1 },
+  { id: 'ffa', n: 'Último de pé', d: 'Ganha uma Batalha solitária', r: 150, cur: () => save.stats.f.ffa | 0, g: 1 },
+  { id: 'duo', n: 'Dupla dinâmica', d: 'Ganha uma partida de 2 vs 2', r: 100, cur: () => save.stats.f.duo | 0, g: 1 },
+  { id: 'nopot', n: 'Sem batota', d: 'Ganha sem beber poções', r: 100, cur: () => save.stats.f.nopot | 0, g: 1 },
+  { id: 'lv10', n: 'Nível máximo', d: 'Leva um herói ao nível 10', r: 150, cur: () => CKEYS.filter(k => save.levels[k] >= 10 || save.stars[k] > 0).length, g: 1 },
+  { id: 'star1', n: 'Primeira estrela', d: 'Faz o primeiro Prestígio', r: 300, cur: () => CKEYS.reduce((t, k) => t + save.stars[k], 0), g: 1 },
+  { id: 'star5', n: 'Cinco estrelas', d: 'Leva um herói a 5 ★', r: 1000, cur: () => Math.max(...CKEYS.map(k => save.stars[k])), g: 5 },
+  { id: 'rich', n: 'Cofre cheio', d: 'Junta 5000 moedas', r: 200, cur: () => save.coins, g: 5000 },
+  { id: 'arm', n: 'Blindado', d: 'Compra a armadura Celestial num herói', r: 300, cur: () => CKEYS.filter(k => save.armor[k] >= 8).length, g: 1 },
+  { id: 'wpn', n: 'Arma lendária', d: 'Compra a arma Lendária num herói', r: 300, cur: () => CKEYS.filter(k => save.weapon[k] >= 5).length, g: 1 },
+  { id: 'dmg', n: 'Destruidor', d: 'Causa 10 000 de dano', r: 200, cur: () => Math.round(save.stats.dmg), g: 10000 },
+  { id: 'q10', n: 'Caçador de missões', d: 'Resgata 10 missões', r: 150, cur: () => save.stats.quests, g: 10 },
+  { id: 'time', n: 'Viciado na arena', d: 'Joga durante 2 horas', r: 150, cur: () => Math.round(save.stats.time / 60), g: 120, unit: 'min' }];
+function checkAch() {
+  const got = []; let coins = 0;
+  for (const a of ACH) if (!save.ach[a.id] && a.cur() >= a.g) { save.ach[a.id] = true; save.coins += a.r; coins += a.r; got.push(a.n); }
+  if (got.length) { persist(); SFX.lvl(); toast(`🏆 Conquista${got.length > 1 ? 's' : ''}: ${got.join(', ')}\n+${coins} moedas`, 4600); }
+  return got.length;
+}
+let stTab = 'gen';
+function renderStats() {
+  document.querySelectorAll('#stTabs [data-st]').forEach(b => b.classList.toggle('sel', b.dataset.st === stTab));
+  const body = $('stBody'); body.innerHTML = ''; const S = save.stats;
+  if (stTab === 'gen') {
+    const tm = Math.floor(S.time / 60), box = (v, l) => `<div class="sbox"><b>${v}</b><span>${l}</span></div>`, g = document.createElement('div'); g.className = 'sgrid';
+    g.innerHTML = box(S.games, 'Partidas') + box(S.wins, 'Vitórias') + box(S.losses, 'Derrotas') + box(S.games ? Math.round(100 * S.wins / S.games) + '%' : '–', '% de vitórias') + box(S.streak, 'Sequência atual') + box(S.best, 'Melhor sequência')
+      + box(Math.floor(tm / 60) + 'h ' + String(tm % 60).padStart(2, '0') + 'm', 'Tempo de combate') + box(Math.round(S.dmg).toLocaleString('pt-PT'), 'Dano causado') + box(S.coins.toLocaleString('pt-PT'), '🪙 ganhas em partidas') + box(S.quests, 'Missões resgatadas') + box(save.tower.best, '🗼 Recorde da Torre');
+    body.appendChild(g);
+    const hs = CKEYS.filter(k => S.heroes[k] && S.heroes[k].w + S.heroes[k].l > 0).sort((a, b) => stC(b) - stC(a)).slice(0, 10), h = document.createElement('div');
+    h.innerHTML = `<h3 style="color:var(--gold);margin:14px 0 6px;text-align:center">Heróis mais usados</h3>` + (hs.length ? '' : '<p class="hint" style="margin:0 auto">Ainda sem partidas. Vai jogar!</p>');
+    for (const k of hs) { const e = S.heroes[k], tot = e.w + e.l; const r = document.createElement('div'); r.className = 'acard'; r.innerHTML = `<span class="ai" style="color:${CLASSES[k].color}">●</span><div><b style="color:${CLASSES[k].color}">${CLASSES[k].name}${save.stars[k] ? ' ' + '★'.repeat(save.stars[k]) : ''}</b><small>${e.w} vitória${e.w === 1 ? '' : 's'} · ${e.l} derrota${e.l === 1 ? '' : 's'} · ${Math.round(100 * e.w / tot)}%</small></div>`; h.appendChild(r); }
+    body.appendChild(h);
+  } else {
+    const done = ACH.filter(a => save.ach[a.id]).length, hd = document.createElement('div'); hd.className = 'chip'; hd.style.alignSelf = 'center'; hd.textContent = `${done} / ${ACH.length} desbloqueadas`; body.appendChild(hd);
+    for (const a of [...ACH].sort((x, y) => (save.ach[y.id] ? 1 : 0) - (save.ach[x.id] ? 1 : 0))) {
+      const on = !!save.ach[a.id], cur = Math.min(a.g, a.cur()), d = document.createElement('div'); d.className = 'acard ' + (on ? 'on' : 'off');
+      d.innerHTML = `<span class="ai">${on ? '🏆' : '🔒'}</span><div><b>${a.n}</b><small>${a.d}${on ? '' : ` · ${cur.toLocaleString('pt-PT')} / ${a.g.toLocaleString('pt-PT')}${a.unit ? ' ' + a.unit : ''}`}</small>${on ? '' : `<div class="qbar"><i style="width:${Math.round(cur / a.g * 100)}%"></i></div>`}</div><span class="rw">${on ? '✔' : '🪙 ' + a.r}</span>`; body.appendChild(d);
+    }
+  }
+}
+document.querySelectorAll('#stTabs [data-st]').forEach(b => b.addEventListener('click', () => { audio(); SFX.click(); stTab = b.dataset.st; renderStats(); }));
+btn('bStats', () => showScreen('s-stats'));
+btn('bStBack', () => showScreen('s-menu'));
+
 btn('bQBack', () => showScreen('s-menu'));
 setInterval(() => { if (curScreen === 's-menu') refreshMenu(); else if (curScreen === 's-quests') renderQuests(); }, 20000);
 
@@ -770,8 +1000,12 @@ btn('bDiffBack', () => showScreen('s-menu'));
 btn('bSetBack', () => showScreen('s-menu'));
 btn('bByeBack', () => showScreen('s-menu'));
 btn('bResume', resumeGame);
-btn('bGiveUp', toMenu);
+btn('bGiveUp', () => { if (G.tower && G.state !== 'matchEnd') { endTowerRun(); } else toMenu(); });
 btn('bAgain', () => startMatch(G.diff));
+btn('brGo', () => tnPlay());
+btn('brSim', () => { const sx = save.settings.sfx; save.settings.sfx = false; tnPlay(); G.sim = true; let n = 0; while (G.state !== 'matchEnd' && n++ < 30000) update(1 / 30); G.sim = false; save.settings.sfx = sx; if (G.state !== 'matchEnd') toMenu(); });
+btn('brQuit', toMenu);
+
 btn('bResChar', () => { G.state = 'menu'; showScreen('s-char'); });
 btn('bResMenu', toMenu);
 $('pauseBtn').addEventListener('click', () => { audio(); pauseGame(); });
@@ -779,14 +1013,27 @@ $('bSkip').addEventListener('click', () => { audio(); if (G.mode === 3 && G.spec
 document.querySelectorAll('[data-diff]').forEach(b => b.addEventListener('click', () => { audio(); SFX.click(); startMatch(b.dataset.diff); }));
 
 const DTXT = { easy: ['Bot lento e distraído', 'Bots lentos e distraídos'], normal: ['Bot esquiva e usa habilidades', 'Bots esquivam e usam habilidades'], hard: ['Bot rápido, prevê os teus movimentos', 'Bots rápidos, prevêem os teus movimentos'] };
+function renderP2Row() {
+  const r = $('p2Row'); r.innerHTML = ''; const on = save.mode >= 5 && save.mode <= 7; r.style.display = on ? '' : 'none'; if (!on) return;
+  if (save.p2 !== 'random' && !(CKEYS.includes(save.p2) && isUnlocked(save.p2))) save.p2 = 'random';
+  const l = ['random', ...CKEYS.filter(isUnlocked)], i = Math.max(0, l.indexOf(save.p2));
+  const mk = (t, d) => { const b = document.createElement('button'); b.className = 'btn small'; b.textContent = t; b.addEventListener('click', () => { audio(); SFX.click(); save.p2 = l[(i + d + l.length) % l.length]; persist(); renderModeRow(); }); return b; };
+  const lab = document.createElement('span'); lab.className = 'chip'; lab.textContent = 'Herói do J2: ' + (save.p2 === 'random' ? '🎲 Aleatório' : CLASSES[save.p2].name);
+  r.append(mk('◀', -1), lab, mk('▶', 1));
+}
 function renderModeRow() {
-  const row = $('modeRow'); row.innerHTML = '';
-  for (const [m, label] of [[1, '⚔ 1 vs 1'], [2, '👥 2 vs 2 (tu + bot aleatório)'], [3, '☠ Batalha solitária (1 vs 3)']]) {
+  const row = $('modeRow'); row.innerHTML = ''; renderP2Row();
+  for (const [m, label] of [[1, '⚔ 1 vs 1'], [2, '👥 2 vs 2 (tu + bot aleatório)'], [3, '☠ Batalha solitária (1 vs 3)'], [4, '🗼 Torre'], [5, '🎮 Co-op local (J1 + J2 vs 2 bots)'], [6, '🥊 Duelo local (J1 vs J2)'], [7, '🏆 Torneio local (4)']]) {
     const b = document.createElement('button'); b.className = 'btn small' + (save.mode === m ? ' sel' : ''); b.textContent = label;
     b.addEventListener('click', () => { audio(); SFX.click(); save.mode = m; persist(); renderModeRow(); });
     row.appendChild(b);
   }
+  for (const k of Object.keys(DIFF)) document.querySelector(`[data-diff=${k}]`).style.display = (save.mode === 4 || save.mode === 6) && k !== 'normal' ? 'none' : '';
+  if (save.mode === 4) { document.querySelector('[data-diff=normal] .diffbtn').firstChild.textContent = 'Subir a Torre'; document.querySelector('[data-diff=normal] small').textContent = `3 vidas · sem loja · recorde: andar ${save.tower.best} · 🪙 por andar`; return; }
+  if (save.mode === 6) { document.querySelector('[data-diff=normal] .diffbtn').firstChild.textContent = 'Começar duelo'; document.querySelector('[data-diff=normal] small').textContent = 'J1: WASD, J e Espaço · J2: setas, Enter e Shift · mira automática'; return; }
+  document.querySelector('[data-diff=normal] .diffbtn').firstChild.textContent = 'Normal';
   for (const k of Object.keys(DIFF)) { const D = DIFF[k], two = save.mode >= 2; document.querySelector(`[data-diff=${k}] small`).textContent = `${DTXT[k][two ? 1 : 0]} · +${D.gain}/3 de nível · +${D.coins * (save.mode >= 2 ? 2 : 1)} 🪙`; }
+  if (save.mode === 5 || save.mode === 7) for (const k of Object.keys(DIFF)) document.querySelector(`[data-diff=${k}] small`).textContent = DTXT[k][1] + ' · modo local, sem moedas nem níveis';
 }
 function renderArenaRow() {
   const row = $('arenaRow'); row.innerHTML = '';
@@ -856,6 +1103,17 @@ function renderShop() {
         !open || done || !next || save.coins < w.price, () => { save.coins -= w.price; save.weapon[k] = t; persist(); buySfx(); $('shopMsg').textContent = `${c.name} equipou a arma ${w.name}!`; renderShop(); }));
     });
     if (!$('shopMsg').textContent) $('shopMsg').textContent = 'A arma é por herói. Compra por ordem: cada nova substitui a anterior e os bónus acumulam-se.';
+  } else if (shopTab === 'skin') {
+    const k = CKEYS[shopHero], c = CLASSES[k], open = isUnlocked(k), S = skinOf(k);
+    body.appendChild(shopHeroSel(kk => { const z = save.skins[kk]; return z && z.sel ? SKINS.find(x => x.id === z.sel).n : 'Original'; }));
+    [{ id: '', n: 'Original', price: 0 }, ...SKINS].forEach(sk => {
+      const own = !sk.id || S.own.includes(sk.id), eq = S.sel === sk.id;
+      const row = shopRow('<canvas width="76" height="60"></canvas>', sk.n, c.name + (sk.id === 'rainbow' ? ' · cores animadas' : sk.id ? ' · só muda o aspeto' : ' · cor original'), '',
+        !open ? '🔒 Herói bloqueado' : eq ? '✔ Equipada' : own ? 'Equipar' : '🪙 ' + sk.price, !open || eq || (!own && save.coins < sk.price),
+        () => { if (!own) { save.coins -= sk.price; S.own.push(sk.id); buySfx(); $('shopMsg').textContent = `${c.name} ganhou a skin ${sk.n}!`; } else { SFX.click(); $('shopMsg').textContent = ''; } S.sel = sk.id; persist(); checkAch(); renderShop(); });
+      body.appendChild(row); shopPrev.push({ c: row.querySelector('canvas').getContext('2d'), k, t: 0, s: sk.id });
+    });
+    if (!$('shopMsg').textContent) $('shopMsg').textContent = 'As skins são por herói e só mudam a cor. Compras uma vez e podes trocar quando quiseres.';
   } else {
     const O = ensureOffers();
     O.items.forEach((it, i) => {
@@ -876,9 +1134,11 @@ function renderShop() {
   }
 }
 // settings
-function syncSettings() { $('setVol').value = Math.round(save.settings.volume * 100); $('setMus').checked = save.settings.music; $('setSfx').checked = save.settings.sfx; $('setTouch').checked = save.settings.touch; }
+function syncSettings() { $('setVol').value = Math.round(save.settings.volume * 100); $('setMus').checked = save.settings.music; $('setEv').checked = save.settings.events; $('setRp').checked = save.settings.replay !== false; $('setSfx').checked = save.settings.sfx; $('setTouch').checked = save.settings.touch; }
 $('setVol').addEventListener('input', e => { save.settings.volume = e.target.value / 100; persist(); });
 $('setVol').addEventListener('change', () => { audio(); SFX.hit(); });
+$('setEv').addEventListener('change', e => { save.settings.events = e.target.checked; persist(); });
+$('setRp').addEventListener('change', e => { save.settings.replay = e.target.checked; persist(); });
 $('setMus').addEventListener('change', e => { save.settings.music = e.target.checked; persist(); if (e.target.checked) audio(); });
 $('setSfx').addEventListener('change', e => { save.settings.sfx = e.target.checked; persist(); if (e.target.checked) { audio(); SFX.click(); } });
 $('setTouch').addEventListener('change', e => { save.settings.touch = e.target.checked; persist(); });
@@ -887,7 +1147,7 @@ $('bReset').addEventListener('click', () => {
   const b = $('bReset');
   if (!resetArm) { resetArm = 1; b.textContent = 'Tens a certeza? Clica de novo'; setTimeout(() => { resetArm = 0; b.textContent = 'Apagar progresso'; }, 3000); return; }
   resetArm = 0; b.textContent = 'Progresso apagado ✓'; setTimeout(() => { b.textContent = 'Apagar progresso'; }, 1500);
-  for (const k of CKEYS) { save.levels[k] = 1; save.armor[k] = 0; save.weapon[k] = 0; } save.boost = { gold: 0, sage: 0 }; save.offers = null; save.quests = null; for (const p in save.potions) save.potions[p] = 0; save.coins = 0; save.selected = 'warrior'; persist();
+  for (const k of CKEYS) { save.levels[k] = 1; save.armor[k] = 0; save.weapon[k] = 0; } save.boost = { gold: 0, sage: 0 }; save.offers = null; save.quests = null; for (const k of CKEYS) save.stars[k] = 0; save.ach = {}; save.tower = { best: 0, runs: 0 }; save.skins = {}; save.stats = { games: 0, wins: 0, losses: 0, time: 0, streak: 0, best: 0, dmg: 0, coins: 0, quests: 0, heroes: {}, f: {} }; for (const p in save.potions) save.potions[p] = 0; save.coins = 0; save.selected = 'warrior'; persist();
 });
 
 // character cards
@@ -903,18 +1163,23 @@ function renderCards() {
   }
   $('progLine').textContent = `Soma dos níveis: ${progress()}`;
   for (const k of CKEYS.filter(x => charCat === 'all' || CLASSES[x].cat === charCat).sort((x, y) => (UNLOCK[x] || 0) - (UNLOCK[y] || 0))) {
-    const c = CLASSES[k], lv = save.levels[k], m = lvlMods(lv), open = isUnlocked(k);
+    const c = CLASSES[k], lv = save.levels[k], m = lvlMods(lv), open = isUnlocked(k), st = save.stars[k] | 0, sb = 1 + .03 * st;
     const d = document.createElement('div'); d.className = 'card' + (k === save.selected ? ' sel' : '') + (open ? '' : ' locked');
-    d.innerHTML = `<canvas width="160" height="120"></canvas><h3 style="color:${open ? c.color : '#8a92ad'}">${open ? '' : '🔒 '}${c.name}</h3>` + (open ? `
+    d.innerHTML = `<canvas width="160" height="120"></canvas><h3 style="color:${open ? c.color : '#8a92ad'}">${open ? '' : '🔒 '}${c.name}${st ? ` <span style="color:#f2c14e;font-size:.8em">${'★'.repeat(st)}</span>` : ''}</h3>` + (open ? `
       <div class="lvlbar">${Array.from({ length: 10 }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</div>
       <div class="stat"><span>Nível</span><b>${lv}${lv >= 10 ? ' (máx.)' : ` · ${save.pts[k] || 0}/3`}</b></div>
-      <div class="stat"><span>Vida</span><b>${Math.round(c.hp * m.hp)}</b></div>
-      <div class="stat"><span>Dano</span><b>${Math.round(c.basic.dmg * m.dmg)}</b></div>
+      <div class="stat"><span>Vida</span><b>${Math.round(c.hp * m.hp * sb)}</b></div>
+      <div class="stat"><span>Dano</span><b>${Math.round(c.basic.dmg * m.dmg * sb)}</b></div>
       <div class="stat"><span>Velocidade</span><b>${c.speed}</b></div>
+      <div class="stat"><span>Estrelas</span><b style="color:#f2c14e">${'★'.repeat(st)}${'☆'.repeat(5 - st)}</b></div>
       <div class="stat"><span>Armadura</span><b>${armorLabel(k)}</b></div>
       <div class="stat"><span>Arma</span><b>${weaponLabel(k)}</b></div>
       <div class="stat"><span>${c.special.name}</span><b>${(c.special.cd * m.sp).toFixed(1)}s</b></div>
       <p><b>🗡 Ataque:</b> ${heroSplit(k).atk}<br><b>✨ Especial:</b> ${heroSplit(k).sp}</p>` : `<p class="lockmsg">Desbloqueia com soma de níveis ${UNLOCK[k]}<br>Atual: ${progress()} / ${UNLOCK[k]}</p><p>${c.desc}</p>`);
+    if (open && lv >= 10 && st < 5) { const pb = document.createElement('button'); pb.className = 'btn small'; pb.style.marginTop = '8px'; pb.textContent = `★ Prestígio (${st + 1}/5)`; let arm = 0;
+      pb.addEventListener('click', e => { e.stopPropagation(); audio(); if (!arm) { arm = 1; pb.textContent = 'Nível volta a 1. Confirmar?'; setTimeout(() => { arm = 0; pb.textContent = `★ Prestígio (${st + 1}/5)`; }, 3500); return; }
+        save.stars[k] = st + 1; save.levels[k] = 1; save.pts[k] = 0; persist(); SFX.lvl(); toast(`★ ${c.name} ganhou a estrela ${st + 1}! +3% de dano e de vida para sempre`, 4200); checkAch(); renderCards(); });
+      d.appendChild(pb); }
     d.addEventListener('click', () => { audio(); if (!open) { SFX.hit(); return; } SFX.click(); save.selected = k; persist(); renderCards(); });
     box.appendChild(d); previews.push({ k, c: d.querySelector('canvas').getContext('2d') });
   }
@@ -935,7 +1200,7 @@ function hurt(t, dmg, sx, sy, kb, quiet) {
   if (t.shield > 0) { dmg *= .25; kb = 0; }
   if (t.absorb > 0) { const ab = Math.min(t.absorb, dmg); t.absorb -= ab; dmg -= ab; if (dmg < 1) { t.flash = .12; G.texts.push({ x: t.x + rnd(-8, 8), y: t.y - t.r - 8, txt: '🛡' + Math.round(ab), life: .7, col: '#8fe8ff' }); if (!quiet) SFX.hit(); return; } }
   dmg = Math.max(1, Math.round(dmg)); t.hp = Math.max(0, t.hp - dmg); t.flash = .12;
-  if (t !== G.player && G.player && t.team !== G.player.team && nearFoe(t.team, t.x, t.y) === G.player) qEvent('dmg', dmg);
+  if (!G.noQ && t !== G.player && G.player && t.team !== G.player.team && nearFoe(t.team, t.x, t.y) === G.player) { qEvent('dmg', dmg); if (!G.autoplay && !G.local) save.stats.dmg += dmg; }
   if (!quiet) {
     const at = nearFoe(t.team, t.x, t.y);
     if (at && at.hp > 0 && at.wFire && t.hp > 0 && !(t.burn && t.burn.t > .5)) t.burn = { t: 2, dmg: 2 * at.dmgMul, tick: .5 };
@@ -1158,6 +1423,60 @@ function doSpecial(f, dirA) {
   }
   return true;
 }
+
+/* ---------- EVENTOS NAS ARENAS ---------- */
+const EV_ZONE0 = 25, EV_ZONE_T = 35, EV_RMIN = 125, ARC = { x: AR.x + AR.w / 2, y: AR.y + AR.h / 2 };
+const evOn = () => save.settings.events !== false;
+function evReset() { G.ev = { next: rnd(9, 13), meteors: [], crates: [], msg: null, mt: 0, zt: .5, zoneMsg: false }; }
+function zoneR() { const k = clamp((G.fightT - EV_ZONE0) / EV_ZONE_T, 0, 1), r0 = Math.hypot(AR.w, AR.h) / 2 + 20; return r0 * (1 - k) + EV_RMIN * k; }
+function evSay(t) { if (G.ev) { G.ev.msg = t; G.ev.mt = 2.4; } }
+function evSpot(margin) { for (let i = 0; i < 30; i++) { const x = rnd(AR.x + margin, AR.x + AR.w - margin), y = rnd(AR.y + margin, AR.y + AR.h - margin);
+  if (PILLARS.every(q => Math.hypot(q.x - x, q.y - y) > (q.r || 30) + 24) && HAZ.every(h => Math.hypot(h.x - x, h.y - y) > h.r + 24)) return { x, y }; } return { x: ARC.x, y: ARC.y }; }
+function evMeteors() {
+  const E = G.ev, n = 4 + Math.floor(Math.random() * 3), live = G.fs.filter(f => f.hp > 0);
+  for (let i = 0; i < n; i++) { let x, y; if (live.length && Math.random() < .45) { const f = live[Math.floor(Math.random() * live.length)]; x = clamp(f.x + rnd(-45, 45), AR.x + 40, AR.x + AR.w - 40); y = clamp(f.y + rnd(-45, 45), AR.y + 40, AR.y + AR.h - 40); } else ({ x, y } = evSpot(50));
+    E.meteors.push({ x, y, t: 1.3 + i * .22, t0: 1.3 + i * .22, r: 54 }); }
+  evSay('☄ CHUVA DE METEOROS!'); tone(180, .5, 'sawtooth', .12, -80);
+}
+function evCrate() { const c = evSpot(60); G.ev.crates.push({ x: c.x, y: c.y, life: 14 }); evSay('❤ Caixa de vida!'); tone(660, .12, 'triangle', .12, 300); }
+function evStep(dt) {
+  const E = G.ev; if (!E) return;
+  if (E.mt > 0) E.mt -= dt;
+  E.next -= dt;
+  if (E.next <= 0) { E.next = rnd(12, 18); if (E.crates.length === 0 && Math.random() < .45) evCrate(); else evMeteors(); }
+  for (let i = E.meteors.length - 1; i >= 0; i--) { const m = E.meteors[i]; m.t -= dt; if (m.t > 0) continue;
+    G.noQ = true; for (const f of G.fs) if (f.hp > 0 && Math.hypot(f.x - m.x, f.y - m.y) < m.r + f.r * .5) hurt(f, 26, m.x, m.y, 240, true); G.noQ = false;
+    for (const q of G.sums) if (Math.hypot(q.x - m.x, q.y - m.y) < m.r + q.r) q.hp -= 26;
+    G.fx.push({ t: 'ring', x: m.x, y: m.y, life: .4, max: .4, range: m.r * 1.3, col: '#ff7a3a' }); burst(m.x, m.y, '#ff9a3c', 22, 260, 4); burst(m.x, m.y, '#ffe08a', 8, 160, 3); G.shake = Math.max(G.shake, 4); tone(110, .25, 'square', .14, -50); E.meteors.splice(i, 1); }
+  for (let i = E.crates.length - 1; i >= 0; i--) { const c = E.crates[i]; c.life -= dt; let took = null;
+    for (const f of G.fs) if (f.hp > 0 && Math.hypot(f.x - c.x, f.y - c.y) < f.r + 16) { took = f; break; }
+    if (took) { const heal = Math.round(took.maxhp * .3); took.hp = Math.min(took.maxhp, took.hp + heal); G.texts.push({ x: took.x, y: took.y - took.r - 22, txt: '+' + heal + ' ❤', life: 1, col: '#7dff9a' }); burst(c.x, c.y, '#7dff9a', 16, 180, 3); tone(880, .12, 'triangle', .14, 300); tone(1320, .15, 'triangle', .1, 200, .08); E.crates.splice(i, 1); }
+    else if (c.life <= 0) E.crates.splice(i, 1); }
+  if (G.fightT >= EV_ZONE0) {
+    if (!E.zoneMsg) { E.zoneMsg = true; evSay('⚠ A ZONA ESTÁ A ENCOLHER!'); tone(200, .6, 'sawtooth', .12, 100); }
+    E.zt -= dt; if (E.zt <= 0) { E.zt = .5; const R = zoneR(); G.noQ = true; for (const f of G.fs) if (f.hp > 0 && Math.hypot(f.x - ARC.x, f.y - ARC.y) > R) hurt(f, 4, f.x, f.y, 0, true); G.noQ = false; }
+  }
+}
+function evSteer() {
+  const E = G.ev; if (!E) return;
+  for (const f of G.fs) {
+    if (f.hp <= 0 || (f === G.player && !G.autoplay && !G.tn) || f === G.p2 || f.who) continue;
+    let tx = null, ty = null, away = false;
+    for (const m of E.meteors) if (m.t < 1.3 && Math.hypot(f.x - m.x, f.y - m.y) < m.r + f.r + 14) { tx = m.x; ty = m.y; away = true; break; }
+    if (tx === null && G.fightT >= EV_ZONE0 && Math.hypot(f.x - ARC.x, f.y - ARC.y) > zoneR() - 35) { tx = ARC.x; ty = ARC.y; }
+    if (tx === null && f.hp < f.maxhp * .55) { let bd = 300; for (const c of E.crates) { const d = Math.hypot(f.x - c.x, f.y - c.y); if (d < bd) { bd = d; tx = c.x; ty = c.y; } } }
+    if (tx === null) continue;
+    const dx = (away ? f.x - tx : tx - f.x), dy = (away ? f.y - ty : ty - f.y), d = Math.hypot(dx, dy) || 1; f.mx = dx / d; f.my = dy / d;
+  }
+}
+function drawEvents(c) {
+  const E = G.ev; if (!E || !['fight', 'roundEnd'].includes(G.state)) return;
+  if (G.fightT >= EV_ZONE0) { const R = zoneR(); c.save(); c.beginPath(); c.rect(AR.x, AR.y, AR.w, AR.h); c.clip(); c.fillStyle = 'rgba(255,60,40,.16)'; c.beginPath(); c.rect(AR.x, AR.y, AR.w, AR.h); c.arc(ARC.x, ARC.y, R, 0, Math.PI * 2, true); c.fill('evenodd');
+    c.strokeStyle = `rgba(255,90,70,${.7 + .25 * Math.sin(G.time * 6)})`; c.lineWidth = 4; c.setLineDash([14, 8]); c.beginPath(); c.arc(ARC.x, ARC.y, R, 0, 7); c.stroke(); c.restore(); }
+  for (const m of E.meteors) { const k = 1 - m.t / m.t0, kk = clamp(k, 0, 1); c.save(); c.strokeStyle = `rgba(255,120,60,${.5 + .4 * Math.sin(G.time * 16) ** 2})`; c.lineWidth = 3; c.setLineDash([8, 6]); c.beginPath(); c.arc(m.x, m.y, m.r, 0, 7); c.stroke(); c.setLineDash([]);
+    c.fillStyle = 'rgba(255,80,30,.22)'; c.beginPath(); c.arc(m.x, m.y, m.r * kk, 0, 7); c.fill(); if (m.t < 0.5) { const yy = m.y - m.t * 700; c.fillStyle = '#ffb04a'; c.beginPath(); c.arc(m.x, yy, 11, 0, 7); c.fill(); c.fillStyle = 'rgba(255,120,40,.5)'; c.beginPath(); c.moveTo(m.x - 8, yy); c.lineTo(m.x + 8, yy); c.lineTo(m.x, yy - 40); c.fill(); } c.restore(); }
+  for (const cr of E.crates) { if (cr.life < 3 && Math.sin(G.time * 16) > 0) continue; const bob = Math.sin(G.time * 4) * 2; c.save(); c.translate(cr.x, cr.y + bob); c.shadowColor = '#7dff9a'; c.shadowBlur = 14; c.fillStyle = '#f4f4f4'; c.strokeStyle = '#555'; c.lineWidth = 2; c.beginPath(); c.roundRect(-13, -13, 26, 26, 5); c.fill(); c.stroke(); c.shadowBlur = 0; c.fillStyle = '#e5333d'; c.fillRect(-3.5, -9, 7, 18); c.fillRect(-9, -3.5, 18, 7); c.restore(); }
+}
 const allP = () => G.tempP.length ? PILLARS.concat(G.tempP) : PILLARS;
 function segDist(px, py, w) {
   const ex = -Math.sin(w.a) * w.len / 2, ey = Math.cos(w.a) * w.len / 2, ax = w.x - ex, ay = w.y - ey;
@@ -1232,7 +1551,7 @@ function stonePillar(f) {
 }
 function barrier(f, len = 120, life = 2) { G.walls.push({ x: f.x + Math.cos(f.aim) * 60, y: f.y + Math.sin(f.aim) * 60, a: f.aim, len, life, owner: f }); SFX.tp(); }
 function drinkIdx(i) {
-  const p = POTIONS[i]; if (!p || G.state !== 'fight' || G.autoplay) return;
+  const p = POTIONS[i]; if (!p || G.state !== 'fight' || G.autoplay || G.local) return;
   const f = G.player; if (f.hp <= 0 || save.potions[p.k] <= 0) return;
   save.potions[p.k]--; persist(); G.potUsed = (G.potUsed || 0) + 1; qEvent('pot'); f.buf[p.k] = p.dur; if (p.k === 'ward') f.absorb = 40;
   tone(520, .12, 'triangle', .14, 400); tone(780, .18, 'triangle', .12, 300, .1);
@@ -1245,8 +1564,20 @@ function endRound(team) {
   G.shake = 12; $('bSkip').classList.remove('on');
   if (team === 0) SFX.win(); else SFX.lose();
 }
+function endLocal() {
+  if (G.tn) { tnMatchEnd(); return; }
+  G.state = 'matchEnd'; G.spec = false; setPlayUI(false); $('pauseBtn').classList.remove('on');
+  const duel = G.local === 'duel', w1 = G.tw[0] >= 2, c1 = CLASSES[save.selected].name, c2 = CLASSES[G.p2.cls].name;
+  $('resTitle').textContent = duel ? (w1 ? 'J1 VENCE!' : 'J2 VENCE!') : (w1 ? 'VITÓRIA DA EQUIPA!' : 'DERROTA'); $('resTitle').className = 'big ' + (duel || w1 ? 'win' : 'lose');
+  $('resSub').textContent = duel ? `${c1} (J1) vs ${c2} (J2) · ${G.tw[0]}–${G.tw[1]} · ${ARENA.name}` : `${c1} (J1) + ${c2} (J2) vs ${CLASSES[G.botCls].name} + ${CLASSES[G.botCls2].name} · ${DIFF[G.diff].label} · ${G.tw[0]}–${G.tw[1]}`;
+  $('resLvl').innerHTML = 'Modo local: sem moedas, níveis nem estatísticas.<br>"Jogar outra vez" sorteia outro herói para o J2.';
+  showScreen('result');
+}
 function endMatch() {
-  G.state = 'matchEnd'; G.spec = false; setPlayUI(false); { const w0 = G.mode === 3 ? G.player.wins >= 1 : G.player.wins >= 2; qEvent('match'); if (w0) qEvent('win', 1, { mode: G.mode, diff: G.diff, cls: save.selected, pots: G.potUsed | 0, flaw: G.mode === 3 || G.tw[1] === 0 }); persist(); } $('pauseBtn').classList.remove('on');
+  if (G.local) { endLocal(); return; }
+  G.state = 'matchEnd'; G.spec = false; setPlayUI(false); { const w0 = G.mode === 3 ? G.player.wins >= 1 : G.player.wins >= 2; qEvent('match'); if (w0) qEvent('win', 1, { mode: G.mode, diff: G.diff, cls: save.selected, pots: G.potUsed | 0, flaw: G.mode === 3 || G.tw[1] === 0 }); if (!G.autoplay) { const S = save.stats; S.games++; if (w0) { S.wins++; S.streak++; S.best = Math.max(S.best, S.streak); const fl = S.f; if (G.diff === 'hard') fl.hard = 1; if (G.mode === 3 || G.tw[1] === 0) fl.flaw = 1; if (G.mode === 3) fl.ffa = 1; if (G.mode === 2) fl.duo = 1; if (!G.potUsed) fl.nopot = 1; } else { S.losses++; S.streak = 0; }
+      const hh = S.heroes[save.selected] || (S.heroes[save.selected] = { w: 0, l: 0 }); if (w0) hh.w++; else hh.l++; }
+    persist(); } $('pauseBtn').classList.remove('on');
   const won = G.mode === 3 ? G.player.wins >= 1 : G.player.wins >= 2, cls = save.selected, D = DIFF[G.diff], r = $('result');
   $('resTitle').textContent = won ? (G.mode === 3 ? 'ÚLTIMO SOBREVIVENTE!' : 'VITÓRIA!') : (G.mode === 3 ? 'ELIMINADO' : 'DERROTA'); $('resTitle').className = 'big ' + (won ? 'win' : 'lose');
   const two = G.mode === 2, coins = D.coins * (G.mode >= 2 ? 2 : 1);
@@ -1267,8 +1598,9 @@ function endMatch() {
     else if (old >= 10) msg = `${CLASSES[cls].name} já está no nível máximo (10).`;
     else msg = `${CLASSES[cls].name}: ${pts}/3 para o próximo nível (nível ${old})`;
   } else msg = 'Sem subida de nível desta vez. Tenta outra vez!';
-  if (won) { const bonus = G.rndArena ? 10 : 0, gold = save.boost.gold > 0; if (gold) save.boost.gold--; const tot = (coins + bonus) * (gold ? 2 : 1); save.coins += tot; persist();
+  if (won) { const bonus = G.rndArena ? 10 : 0, gold = save.boost.gold > 0; if (gold) save.boost.gold--; const tot = (coins + bonus) * (gold ? 2 : 1); save.coins += tot; save.stats.coins += tot; persist();
     msg += '\n🪙 +' + tot + ' moedas' + (bonus || gold ? ` (${coins}${bonus ? ' + ' + bonus + ' da arena aleatória' : ''}${gold ? ' · ×2 Poção Dourada' : ''})` : '') + ' (saldo: ' + save.coins + ')'; if (G.lastSage) msg += '\n📜 Pergaminho do Sábio: +1 ponto de nível!'; }
+  if (!G.autoplay) checkAch();
   $('resLvl').innerHTML = msg.replace(/\n/g, '<br>');
   showScreen('result');
 }
@@ -1451,16 +1783,24 @@ function stepFighter(f, dt) {
     else f.hz = 0;
   }
 }
+function p2Input(f) {
+  const e = opp(f); if (e) { f.aim = Math.atan2(e.y - f.y, e.x - f.x); f.aimDist = Math.hypot(e.x - f.x, e.y - f.y); }
+  const mx = (keys['arrowright'] ? 1 : 0) - (keys['arrowleft'] ? 1 : 0), my = (keys['arrowdown'] ? 1 : 0) - (keys['arrowup'] ? 1 : 0);
+  f.mx = mx; f.my = my; const sp = wantSp2; wantSp2 = false;
+  if (keys['enter']) doAttack(f);
+  if (sp) doSpecial(f, (mx || my) ? Math.atan2(my, mx) : f.aim);
+}
 function playerInput() {
   const p = G.player;
-  const useMouse = mouseSeen && !(touch.active || touch.atk);
+  const useMouse = mouseSeen && !(touch.active || touch.atk) && G.local !== 'duel';
   if (useMouse) p.aim = Math.atan2(mouse.y - p.y, mouse.x - p.x); else { const e = opp(p); p.aim = Math.atan2(e.y - p.y, e.x - p.x); }
   p.aimDist = useMouse ? Math.hypot(mouse.x - p.x, mouse.y - p.y) : (() => { const e = opp(p); return Math.hypot(e.x - p.x, e.y - p.y); })();
   // teclado relativo à mira: W = frente, S = trás, A/D = lado
-  const fwd = ((keys['w'] || keys['arrowup']) ? 1 : 0) - ((keys['s'] || keys['arrowdown']) ? 1 : 0);
-  const str = ((keys['d'] || keys['arrowright']) ? 1 : 0) - ((keys['a'] || keys['arrowleft']) ? 1 : 0);
+  const fwd = ((keys['w'] || (!G.local && keys['arrowup'])) ? 1 : 0) - ((keys['s'] || (!G.local && keys['arrowdown'])) ? 1 : 0);
+  const str = ((keys['d'] || (!G.local && keys['arrowright'])) ? 1 : 0) - ((keys['a'] || (!G.local && keys['arrowleft'])) ? 1 : 0);
   const ca = Math.cos(p.aim), sa = Math.sin(p.aim);
   let mx = fwd * ca - str * sa, my = fwd * sa + str * ca;
+  if (G.local === 'duel') { mx = str; my = -fwd; }
   if (touch.active) { mx += touch.mx; my += touch.my; }
   p.mx = mx; p.my = my;
   const sp = wantSp; wantSp = false;
@@ -1472,7 +1812,7 @@ function update(dt) {
   for (let i = G.parts.length - 1; i >= 0; i--) { const q = G.parts[i]; q.life -= dt; if (q.life <= 0) { G.parts.splice(i, 1); continue; } q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= .94; q.vy *= .94; }
   for (let i = G.texts.length - 1; i >= 0; i--) { const q = G.texts[i]; q.life -= dt; q.y -= 30 * dt; if (q.life <= 0) G.texts.splice(i, 1); }
   for (let i = G.fx.length - 1; i >= 0; i--) { G.fx[i].life -= dt; if (G.fx[i].life <= 0) G.fx.splice(i, 1); }
-  if (G.state === 'menu' || G.state === 'paused' || G.state === 'matchEnd') {
+  if (G.state === 'menu' || G.state === 'paused' || G.state === 'matchEnd' || G.state === 'towerPick' || G.state === 'replay') {
     if (G.state === 'menu' && Math.random() < dt * 6) G.parts.push({ x: rnd(AR.x, AR.x + AR.w), y: AR.y + AR.h, vx: rnd(-10, 10), vy: rnd(-60, -20), life: 2, max: 2, col: '#f2c14e', size: rnd(1, 3) });
     return;
   }
@@ -1486,10 +1826,13 @@ function update(dt) {
     return;
   }
   if (G.state === 'fight') {
+    if (G.tn) { for (const f of G.fs) if (f.hp > 0) { if (f.who) tnTick(f); else aiThink(f, dt); } }
+    else {
     if (G.autoplay) { if (p.hp > 0) aiThink(p, dt); } else if (p.hp > 0) playerInput();
-    for (const f of G.fs) if (f !== p && f.hp > 0) aiThink(f, dt);
+    for (const f of G.fs) if (f !== p && f.hp > 0) { if (f === G.p2) p2Input(f); else aiThink(f, dt); } }
     for (const f of G.fs) if (f.hp <= 0) f.mx = f.my = 0;
-    G.fightT += dt; if (ARENA.hole) holeStep(dt);
+    if (evOn()) evSteer();
+    G.fightT += dt; if (evOn()) evStep(dt); if (ARENA.hole) holeStep(dt);
     if (G.fightT > 50) { G.sdT -= dt; if (G.sdT <= 0) { G.sdT = .5; const k = 1 + Math.floor((G.fightT - 50) / 5); for (const f of G.fs) if (f.hp > 0) hurt(f, 2 * k, f.x, f.y, 0, true); } }
   } else { for (const f of G.fs) f.mx = f.my = 0; }
   for (const f of G.fs) stepFighter(f, dt);
@@ -1542,10 +1885,37 @@ function update(dt) {
       if (m.armed <= 0 && G.fs.some(t => t.team !== m.owner.team && t.hp > 0 && t.inv <= 0 && Math.hypot(t.x - m.x, t.y - m.y) < 28 + t.r)) explode(m);
     }
   }
+  if (G.state === 'fight' || (G.state === 'roundEnd' && G.rt > 2.0)) recFrame(dt);
   if (G.state === 'roundEnd') {
     G.rt -= dt;
-    if (G.rt <= 0) { if (G.tw[G.winner.team] >= (G.mode === 3 ? 1 : 2)) endMatch(); else { G.round++; resetRound(); } }
+    if (G.rt <= 0) roundDone();
   }
+}
+/* ---------- REPETIÇÃO ---------- */
+function recFrame(dt) {
+  if (G.autoplay || G.sim) return;
+  G.rec.push({ dt, f: G.fs.map(f => Object.assign({}, f)), p: G.projs.map(q => Object.assign({}, q)) });
+  G.recT += dt; while (G.recT > 3.2 && G.rec.length > 1) G.recT -= G.rec.shift().dt;
+}
+function afterRound() {
+  if (G.tower) towerNext(G.winner.team === 0); else if (G.tw[G.winner.team] >= (G.mode === 3 ? 1 : 2)) endMatch(); else { G.round++; resetRound(); }
+}
+function roundDone() {
+  if (!G.autoplay && !G.sim && !G.tower && save.settings.replay !== false && G.rec && G.rec.length > 25 && (!G.tn || G.fs.some(f => f.who))) { G.state = 'replay'; G.rp = { i: 0, acc: 0, fr: G.rec.slice() }; wantSp = false; wantSp2 = false; return; }
+  afterRound();
+}
+function replayStep(dt) {
+  const R = G.rp; if (!R) return; R.acc += dt * .5;
+  while (R.i < R.fr.length && R.acc >= R.fr[R.i].dt) { R.acc -= R.fr[R.i].dt; R.i++; }
+  if (R.i >= R.fr.length) endReplay();
+}
+function endReplay() { if (G.state !== 'replay') return; G.rp = null; G.state = 'roundEnd'; afterRound(); }
+function renderReplay() {
+  const R = G.rp, fr = R.fr[Math.min(R.i, R.fr.length - 1)], sf = G.fs, sp = G.projs; G.fs = fr.f; G.projs = fr.p; render(); G.fs = sf; G.projs = sp;
+  ctx.setTransform(SC, 0, 0, SC, 0, 0); ctx.fillStyle = '#05060d'; ctx.fillRect(0, 0, W, 62); ctx.fillRect(0, H - 34, W, 34);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = Math.sin(G.time * 6) > 0 ? '#ff5a4a' : '#7a2a24'; ctx.beginPath(); ctx.arc(W / 2 - 160, 34, 7, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '800 22px Georgia,serif'; ctx.fillText('REPETIÇÃO · câmara lenta', W / 2 + 10, 41);
+  ctx.fillStyle = '#9aa1c0'; ctx.font = '13px system-ui,sans-serif'; ctx.fillText('prime qualquer tecla ou clica para saltar', W / 2, H - 12);
 }
 
 /* ---------- RENDER ---------- */
@@ -1665,8 +2035,8 @@ function drawArmor(c, f, t, r) {
   c.restore();
 }
 function drawFighter(c, f, t, alpha = 1) {
-  const col = CLASSES[f.cls].color, r = f.r;
-  c.save(); c.globalAlpha = alpha; c.translate(f.x, f.y);
+  const col = skinCol(f.skin, t) || CLASSES[f.cls].color, r = f.r;
+  c.save(); c.globalAlpha = alpha; if (f.skin) { c.shadowColor = col; c.shadowBlur = 10; } c.translate(f.x, f.y);
   c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(3, r * .8, r, r * .55, 0, 0, 7); c.fill();
   c.rotate(f.aim);
   if (f.cls === 'warrior') {
@@ -1813,7 +2183,7 @@ function bar(x, y, w, h, frac, col, align) {
 }
 function hud2() {
   const draw = (f, x, side) => {
-    const w = 170, dead = f.hp <= 0, tag = f === G.player ? 'TU' : (f.team === 0 ? 'ALIADO' : 'BOT');
+    const w = 170, dead = f.hp <= 0, tag = f === G.player ? (G.local ? 'J1' : 'TU') : f === G.p2 ? 'J2' : (f.team === 0 ? 'ALIADO' : 'BOT');
     ctx.fillStyle = dead ? '#777' : '#fff'; ctx.font = '700 12px system-ui,sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     ctx.fillText(`${tag} · ${f.c.name} Nv ${f.lvl}`, x, 18);
     bar(x, 23, w, 16, f.hp / f.maxhp, dead ? '#555' : f.c.color, side);
@@ -1822,7 +2192,7 @@ function hud2() {
   };
   G.fs.filter(f => f.team === 0).forEach((f, i) => draw(f, 24 + i * 180, 'l'));
   G.fs.filter(f => f.team === 1).forEach((f, i) => draw(f, W - 24 - 170 - i * 180, 'r'));
-  for (let t = 0; t < 2; t++) for (let i = 0; i < 2; i++) { const px = W / 2 + (t ? 1 : -1) * (26 + i * 18); ctx.fillStyle = i < G.tw[t] ? '#f2c14e' : '#ffffff22'; ctx.beginPath(); ctx.arc(px, 62, 6, 0, 7); ctx.fill(); ctx.strokeStyle = '#0008'; ctx.stroke(); }
+  for (let t = 0; t < 2; t++) for (let i = 0; i < (G.tower ? 0 : 2); i++) { const px = W / 2 + (t ? 1 : -1) * (26 + i * 18); ctx.fillStyle = i < G.tw[t] ? '#f2c14e' : '#ffffff22'; ctx.beginPath(); ctx.arc(px, 62, 6, 0, 7); ctx.fill(); ctx.strokeStyle = '#0008'; ctx.stroke(); }
 }
 function hud3() {
   const xs = [22, 218, 557, 753], w = 185;
@@ -1841,15 +2211,15 @@ function drawHUD() {
   for (const [f, x, side] of (G.mode >= 2 ? [] : [[p, 24, 'l'], [b, W - 24 - 330, 'r']])) {
     const tx = side === 'l' ? x : x + 330;
     ctx.fillStyle = '#fff'; ctx.font = '700 15px system-ui,sans-serif'; ctx.textAlign = side === 'l' ? 'left' : 'right'; ctx.textBaseline = 'alphabetic';
-    ctx.fillText(`${f === p ? 'TU' : 'BOT'} · ${f.c.name} Nv ${f.lvl}`, tx, 20);
+    ctx.fillText(`${f.who === 'j1' ? 'J1' : f.who === 'j2' ? 'J2' : f === p ? (G.local && !G.tn ? 'J1' : G.tn ? 'BOT' : 'TU') : f === G.p2 ? 'J2' : 'BOT'} · ${f.c.name} Nv ${f.lvl}`, tx, 20);
     bar(x, 26, 330, 20, f.hp / f.maxhp, f.c.color, side);
     ctx.fillStyle = '#fff'; ctx.font = '700 13px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`${Math.ceil(f.hp)} / ${f.maxhp}`, x + 165, 41);
     bar(x, 50, 330, 8, 1 - f.cdS / f.spCd, f.cdS <= 0 ? '#ffe08a' : '#7a7f99', side);
-    for (let i = 0; i < 2; i++) { const px = side === 'l' ? x + 345 + i * 18 : x - 15 - i * 18; ctx.fillStyle = i < f.wins ? '#f2c14e' : '#ffffff22'; ctx.beginPath(); ctx.arc(px, 36, 6, 0, 7); ctx.fill(); ctx.strokeStyle = '#0008'; ctx.stroke(); }
+    for (let i = 0; i < (G.tower ? 0 : 2); i++) { const px = side === 'l' ? x + 345 + i * 18 : x - 15 - i * 18; ctx.fillStyle = i < f.wins ? '#f2c14e' : '#ffffff22'; ctx.beginPath(); ctx.arc(px, 36, 6, 0, 7); ctx.fill(); ctx.strokeStyle = '#0008'; ctx.stroke(); }
   }
   if (G.mode === 2) hud2(); else if (G.mode === 3) hud3();
-  ctx.fillStyle = '#c9cde0'; ctx.font = '700 16px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.fillText(G.mode === 3 ? `VIVOS: ${G.fs.filter(o => o.hp > 0).length}/4` : `RONDA ${G.round}`, W / 2, 28);
-  ctx.fillStyle = '#8a92ad'; ctx.font = '13px system-ui,sans-serif'; ctx.fillText(DIFF[G.diff].label + ' · ' + ARENA.name, W / 2, 46);
+  ctx.fillStyle = '#c9cde0'; ctx.font = '700 16px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.fillText(G.tn ? `${TN_ST[G.tn.stage]} · RONDA ${G.round}` : G.tower ? `🗼 ANDAR ${G.tower.floor}  ${'♥'.repeat(G.tower.lives)}${'♡'.repeat(Math.max(0, 3 - G.tower.lives))}` : G.mode === 3 ? `VIVOS: ${G.fs.filter(o => o.hp > 0).length}/4` : `RONDA ${G.round}`, W / 2, 28);
+  ctx.fillStyle = '#8a92ad'; ctx.font = '13px system-ui,sans-serif'; ctx.fillText((G.tower ? (G.bot.boss ? '👑 CHEFE' : 'Torre') + (G.tower.picks.length ? ' ' + G.tower.picks.join('') : '') : DIFF[G.diff].label) + ' · ' + ARENA.name, W / 2, 46);
   // poções (slots + efeitos ativos)
   POTIONS.forEach((pt, i) => {
     const n = save.potions[pt.k], x = 20 + i * 76, y = H - 27;
@@ -1931,6 +2301,7 @@ function render() {
     else if (q.type === 'fire') { const g = ctx.createRadialGradient(q.x, q.y, 1, q.x, q.y, q.r + 6); g.addColorStop(0, '#fff6c8'); g.addColorStop(.5, '#ff9a3c'); g.addColorStop(1, 'rgba(255,100,40,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q.x, q.y, q.r + 6, 0, 7); ctx.fill(); }
     else { const a = Math.atan2(q.vy, q.vx); ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(a); ctx.strokeStyle = '#e8e2c8'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(8, 0); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(6, -3.5); ctx.lineTo(6, 3.5); ctx.fill(); ctx.restore(); }
   }
+  if (evOn()) drawEvents(ctx);
   if (G.player && G.bot && G.state !== 'menu') {
     for (const f of G.fs.slice().sort((a, b) => a.y - b.y)) {
       if (G.mode >= 2 && f.hp <= 0) continue;
@@ -1939,7 +2310,7 @@ function render() {
         if (f === G.player && f.hp > 0) { ctx.fillStyle = '#ffe08a'; ctx.beginPath(); ctx.moveTo(f.x, f.y - f.r - 30); ctx.lineTo(f.x - 7, f.y - f.r - 42); ctx.lineTo(f.x + 7, f.y - f.r - 42); ctx.closePath(); ctx.fill(); }
       }
       drawFighter(ctx, f, G.time, f.hp > 0 ? (f.buf.ghost > 0 ? .3 : f.inv > 0 ? .4 : 1) : .3);
-      if (f.hp > 0) { ctx.fillStyle = '#fff'; ctx.font = '700 11px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.globalAlpha = .85; ctx.fillText('Nv' + f.lvl, f.x, f.y - f.r - 8); ctx.globalAlpha = 1; }
+      if (f.hp > 0) { ctx.fillStyle = '#fff'; ctx.font = '700 11px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.globalAlpha = .85; ctx.fillText((f.boss ? '👑 ' : '') + (G.local ? (f.who ? f.who.toUpperCase() + ' ' : f === G.player && !G.tn ? 'J1 ' : f === G.p2 ? 'J2 ' : '') : '') + 'Nv' + f.lvl, f.x, f.y - f.r - 8); ctx.globalAlpha = 1; }
     }
   }
   for (const q of G.texts) { ctx.globalAlpha = clamp(q.life / .4, 0, 1); ctx.fillStyle = q.col; ctx.font = '800 18px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.strokeText(q.txt, q.x, q.y); ctx.fillText(q.txt, q.x, q.y); }
@@ -1949,14 +2320,16 @@ function render() {
     const n = G.cd > 1.9 ? '3' : G.cd > 1.2 ? '2' : G.cd > .5 ? '1' : 'LUTA!';
     bigText(n, n === 'LUTA!' ? '#f2c14e' : '#fff', n === 'LUTA!' ? 90 : 110);
     ctx.fillStyle = '#e9ecf5'; ctx.font = '700 20px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Arena: ' + ARENA.name + (ARENA.name === 'Lava' ? ' (evita as poças!)' : ARENA.ice ? ' (o chão escorrega!)' : ARENA.sand ? ' (a areia abranda-te!)' : ARENA.hole ? ' (cuidado com o buraco!)' : ''), W / 2, H / 2 + 72);
-    if (G.state === 'countdown' && G.round === 1) { const h = heroSplit(G.player.cls), l1 = '🗡 Ataque: ' + h.atk, l2 = '✨ Especial' + (save.settings.touch ? '' : ' (Espaço / botão direito)') + ': ' + h.sp;
+    if (G.local && G.state === 'countdown' && G.round === 1) { ctx.save(); ctx.fillStyle = '#ffe08aee'; ctx.font = '700 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.fillText((G.local === 'duel' || G.local === 'tourney' ? 'J1: WASD mover · J ataque · Espaço especial' : 'J1: WASD + rato (esq. ataque · dir./Espaço especial)') + '   ·   J2: setas mover · Enter ataque · Shift especial   (mira automática)', W / 2, H - 56); ctx.restore(); }
+    if (!G.local && G.state === 'countdown' && G.round === 1) { const h = heroSplit(G.player.cls), l1 = '🗡 Ataque: ' + h.atk, l2 = '✨ Especial' + (save.settings.touch ? '' : ' (Espaço / botão direito)') + ': ' + h.sp;
       ctx.save(); ctx.font = '600 14px system-ui,sans-serif'; const w = Math.min(W - 40, Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 36); ctx.fillStyle = 'rgba(10,12,22,.72)'; ctx.strokeStyle = CLASSES[G.player.cls].color; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.roundRect(W / 2 - w / 2, H - 92, w, 52, 10); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(l1, W / 2, H - 70); ctx.fillText(l2, W / 2, H - 50); ctx.restore(); }
     if (G.round === 1 && !save.settings.touch) { ctx.fillStyle = '#c9cde0'; ctx.font = '15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.fillText('W frente · S trás · A/D lados · Rato apontar · Clique atacar · Espaço / botão direito = especial · Esc pausa', W / 2, H - 14); }
   }
   if (G.state === 'fight' && G.fightT > 50) { ctx.save(); ctx.globalAlpha = .6 + .4 * Math.sin(G.time * 8); ctx.fillStyle = '#ff7a66'; ctx.font = '800 22px Georgia,serif'; ctx.textAlign = 'center'; ctx.fillText('MORTE SÚBITA!', W / 2, 98); ctx.restore(); }
+  if (evOn() && G.ev && G.ev.mt > 0 && ['fight', 'roundEnd'].includes(G.state)) { ctx.save(); ctx.globalAlpha = clamp(G.ev.mt, 0, 1); ctx.fillStyle = '#ffd58a'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4; ctx.font = '800 26px Georgia,serif'; ctx.textAlign = 'center'; ctx.strokeText(G.ev.msg, W / 2, 130); ctx.fillText(G.ev.msg, W / 2, 130); ctx.restore(); }
   if (G.mode === 3 && G.spec && G.state === 'fight') { ctx.save(); ctx.fillStyle = '#ff9a8a'; ctx.font = '800 20px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.strokeText('☠ ELIMINADO — a ver os bots lutarem', W / 2, H - 52); ctx.fillText('☠ ELIMINADO — a ver os bots lutarem', W / 2, H - 52); ctx.restore(); }
-  if (G.state === 'roundEnd') bigText(G.mode === 3 ? (G.winner.team === 0 ? 'ÚLTIMO VIVO!' : 'ELIMINADO!') : G.winner.team === 0 ? 'RONDA GANHA!' : 'RONDA PERDIDA', G.winner.team === 0 ? '#f2c14e' : '#ff7a66', 64);
+  if (G.state === 'roundEnd') bigText(G.tower ? (G.winner.team === 0 ? 'ANDAR SUPERADO!' : 'PERDESTE UMA VIDA!') : G.mode === 3 ? (G.winner.team === 0 ? 'ÚLTIMO VIVO!' : 'ELIMINADO!') : G.winner.team === 0 ? 'RONDA GANHA!' : 'RONDA PERDIDA', G.winner.team === 0 ? '#f2c14e' : '#ff7a66', 64);
 }
 
 /* ---------- LOOP ---------- */
@@ -2008,22 +2381,24 @@ function tickQuestAnim(now) {
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
-  update(dt); tickQuestAnim(now);
+  update(dt); tickQuestAnim(now); if (G.state === 'fight' && !G.autoplay && !G.local) save.stats.time += dt;
   if (!$('s-char').classList.contains('hidden')) {
     const t = now / 1000;
-    for (const pv of previews) { pv.c.setTransform(1, 0, 0, 1, 0, 0); pv.c.clearRect(0, 0, 160, 120); pv.c.setTransform(1.45, 0, 0, 1.45, 0, 0); drawFighter(pv.c, { armT: save.armor[pv.k], x: 36, y: 40, r: CLASSES[pv.k].r, cls: pv.k, aim: Math.sin(t * 1.5) * .5, flash: 0, swing: pv.k === 'warrior' && Math.sin(t * 3) > .9 ? .1 : 0 }, t); }
+    for (const pv of previews) { pv.c.setTransform(1, 0, 0, 1, 0, 0); pv.c.clearRect(0, 0, 160, 120); pv.c.setTransform(1.45, 0, 0, 1.45, 0, 0); drawFighter(pv.c, { skin: (save.skins[pv.k] || {}).sel, armT: save.armor[pv.k], x: 36, y: 40, r: CLASSES[pv.k].r, cls: pv.k, aim: Math.sin(t * 1.5) * .5, flash: 0, swing: pv.k === 'warrior' && Math.sin(t * 3) > .9 ? .1 : 0 }, t); }
   }
   if (!$('s-shop').classList.contains('hidden')) {
     const t = now / 1000;
-    for (const pv of shopPrev) { pv.c.setTransform(1, 0, 0, 1, 0, 0); pv.c.clearRect(0, 0, 76, 60); pv.c.setTransform(.7, 0, 0, .7, 0, 0); drawFighter(pv.c, { armT: pv.t, x: 36, y: 42, r: CLASSES[pv.k].r, cls: pv.k, aim: Math.sin(t * 1.5) * .4, flash: 0, swing: 0 }, t); }
+    for (const pv of shopPrev) { pv.c.setTransform(1, 0, 0, 1, 0, 0); pv.c.clearRect(0, 0, 76, 60); pv.c.setTransform(.7, 0, 0, .7, 0, 0); drawFighter(pv.c, { skin: pv.s, armT: pv.t, x: 36, y: 42, r: CLASSES[pv.k].r, cls: pv.k, aim: Math.sin(t * 1.5) * .4, flash: 0, swing: 0 }, t); }
   }
-  render(); requestAnimationFrame(frame);
+  if (G.state === 'replay' && G.rp) { replayStep(dt); if (G.rp) renderReplay(); else render(); } else render();
+  requestAnimationFrame(frame);
 }
 showScreen('s-menu'); syncSettings();
 requestAnimationFrame(frame);
 
 // debug / test hooks
-window.__dbg = { applyGear, botTiers, drawQuestAnim, MUS, musicTick, foes, opp, doSpecial, doAttack, aiThink, ALL, drinkIdx, POTIONS, ARMORS, renderShop, G, setArena, ARENAS, update, startMatch, DIFF, CLASSES, save, CKEYS, mkFighter, resetRound, endMatch, keys };
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+window.__dbg = { tnPlay, tnShow, roundDone, endReplay, towerSpawn, towerNext, towerPay, endTowerRun, evMeteors, evCrate, evStep, zoneR, checkAch, ACH, renderStats, applyGear, botTiers, drawQuestAnim, MUS, musicTick, foes, opp, doSpecial, doAttack, aiThink, ALL, drinkIdx, POTIONS, ARMORS, renderShop, G, setArena, ARENAS, update, startMatch, DIFF, CLASSES, save, CKEYS, mkFighter, resetRound, endMatch, keys };
 })();
 </script>
 </body>
