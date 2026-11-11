@@ -62,6 +62,8 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
 #result .win{color:var(--gold)}#result .lose{color:#ff7a66}
 .lvlup{color:var(--green);font-weight:700;font-size:clamp(18px,3vw,26px);text-align:center}
 .hint{font-size:13px;color:var(--mute);text-align:center;max-width:520px}
+.padf{outline:3px solid var(--gold)!important;box-shadow:0 0 18px #f2c14e88!important;position:relative;z-index:2}
+.padset{flex-direction:column;align-items:stretch!important;gap:6px}.padset small{color:var(--mute);line-height:1.4}.padslot{display:flex;gap:10px;align-items:center;padding:4px 10px;border-radius:8px;background:var(--panel2);font-size:14px}.padslot b{min-width:26px;color:var(--gold)}.padslot i{font-style:normal;margin-left:auto}.padslot.on{outline:1px solid #4fd37a}.padslot.act{background:#27422f}
 .langsw{display:flex;gap:6px}.langsw .btn.small{padding:6px 12px;min-width:0}.langsw .btn.sel{outline:2px solid var(--gold);color:var(--gold)}
 .portraithint{display:none}
 @media (orientation:portrait) and (pointer:coarse){.portraithint{display:block}}
@@ -168,6 +170,7 @@ h2{font-family:Georgia,serif;font-size:clamp(26px,4.5vw,44px);margin:0;color:var
   <div class="setrow"><label for="setSfx">Efeitos sonoros</label><input type="checkbox" id="setSfx"></div>
   <div class="setrow"><label for="setTouch">Controlos touch</label><input type="checkbox" id="setTouch"></div>
   <div class="setrow"><label>Idioma</label><span class="langsw"><button class="btn small" id="langPt" data-lang="pt">Português</button><button class="btn small" id="langEn" data-lang="en">English</button></span></div>
+  <div class="setrow padset"><label>🎮 Comandos (até 4)</label><div id="padList"></div><small>Liga o comando por Bluetooth ou USB e carrega num botão para ele aparecer. Esquerdo: mover · Direito: mirar · R2/R1/✕/□: atacar · L2/L1/○/△: especial · Options: pausa · Direcional: poções</small></div>
   <button class="btn danger small" id="bReset">Apagar progresso</button>
   <button class="btn" id="bSetBack">← Voltar</button>
 </div>
@@ -413,6 +416,11 @@ const I18N_PH = [
   ['Poções', 'Potions'], ['Poção', 'Potion'], ['sem loja', 'no shop'], ['equipou', 'equipped'], ['Usa na luta com a tecla', 'Use it in a fight with key'], ['desbloqueadas', 'unlocked'], ['desbloqueada', 'unlocked'], ['por andar', 'per floor'], ['recorde: andar', 'record: floor']
 ];
 // regras com números (aplicadas antes do dicionário); fn recebe os grupos
+I18N_PH.push(
+  ['🎮 Comandos (até 4)', '🎮 Controllers (up to 4)'],
+  ['Liga o comando por Bluetooth ou USB e carrega num botão para ele aparecer. Esquerdo: mover · Direito: mirar · R2/R1/✕/□: atacar · L2/L1/○/△: especial · Options: pausa · Direcional: poções', 'Connect the controller via Bluetooth or USB and press a button so it shows up. Left stick: move · Right stick: aim · R2/R1/✕/□: attack · L2/L1/○/△: special · Options: pause · D-pad: potions'],
+  ['🎮 2 vs 2 só jogadores (4 jogadores)', '🎮 2 vs 2 players only (4 players)'],
+);
 const I18N_RX = [
   [/Ganha 1 partida com o (.+)/g, (m, h) => `Win 1 match with ${h === 'herói' ? 'a hero' : 'the ' + h}`],
   [/Ganha (\d+) partidas?/g, (m, n) => `Win ${n} match${n == 1 ? '' : 'es'}`],
@@ -628,6 +636,26 @@ const GEN = [
   { id: 'firelizard', cat: 'natureza', name: 'Lagarto de Fogo', color: '#d8602a', hp: 130, speed: 175, r: 17, look: ['claws', 'horn', '#ffb060'], a: { t: 'proj', cd: .55, dmg: 7.4, speed: 560, r: 5, burn: 1, ps: 'orb' }, s: { t: 'nova', name: 'Sopro de fogo', cd: 7, dmg: 20, rad: 110, burn: 1, kb: 300, col: '#ff7a2a' }, d: ['Fagulhas que queimam.', 'Sopro de fogo: explosão à volta que queima e empurra.'], en: { n: 'Fire Lizard', sn: 'Fire breath', d: ['Sparks that burn.', 'Fire breath: a blast around you that burns and pushes.'] } },
   { id: 'yeti', cat: 'natureza', name: 'Yeti', color: '#bcd8e8', hp: 258, speed: 155, r: 21, look: ['fists', 'ears', '#f0fbff'], a: { t: 'melee', cd: .8, dmg: 28.3, range: 70, arc: 1.4, kb: 340 }, s: { t: 'nova', name: 'Avalanche', cd: 8, dmg: 20.8, rad: 125, slow: 3, stun: .5, col: '#c0e8ff' }, d: ['Punhos de gelo pesados.', 'Avalanche: abranda 3s e atordoa 0,5s quem estiver perto.'], en: { n: 'Yeti', sn: 'Avalanche', d: ['Heavy fists of ice.', 'Avalanche: slows for 3s and stuns for 0.5s anyone nearby.'] } },
   { id: 'hydra', cat: 'natureza', name: 'Hidra', color: '#2a8a6a', hp: 104, speed: 165, r: 20, look: ['vine', 'horn', '#a0f0c0'], a: { t: 'spread', n: 3, sp: .22, cd: .85, dmg: 4.2, speed: 480, r: 5, pois: 1, ps: 'orb' }, s: { t: 'volley', name: 'Mordida tripla', cd: 7, dmg: 9.1, n: 5, sp: .15, speed: 560, r: 6, pois: 1, ps: 'orb' }, d: ['Três cabeças que cospem veneno.', 'Mordida tripla: 5 jatos de veneno em leque.'], en: { n: 'Hydra', sn: 'Triple bite', d: ['Three heads that spit poison.', 'Triple bite: 5 poison jets in a fan.'] } },
+  { id: 'lion', cat: 'natureza', name: 'Leão', color: '#e0a030', hp: 253, speed: 180, r: 20, look: ['claws', 'crest', '#ffd070'], a: { t: 'melee', cd: 0.6, dmg: 22.3, range: 70, arc: 1.5, kb: 200 }, s: { t: 'curse', name: 'Rugido', cd: 9, dur: 5, range: 520 }, d: ['Garras pesadas e juba imponente.', 'Rugido: amaldiçoa o inimigo e enfraquece-o durante 5s.'], en: { n: 'Lion', sn: 'Roar', d: ['Heavy claws and an imposing mane.', 'Roar: curses the enemy and weakens it for 5s.'] } },
+  { id: 'tiger', cat: 'natureza', name: 'Tigre', color: '#e07a28', hp: 282, speed: 205, r: 17, look: ['claws', 'ears', '#ffd8a0'], a: { t: 'melee', cd: 0.4, dmg: 24.9, range: 60, arc: 1.4, kb: 110 }, s: { t: 'behind', name: 'Emboscada', cd: 6 }, d: ['Garras rápidas e traiçoeiras.', 'Emboscada: aparece atrás do inimigo.'], en: { n: 'Tiger', sn: 'Ambush', d: ['Quick, treacherous claws.', 'Ambush: appears behind the enemy.'] } },
+  { id: 'bat', cat: 'natureza', name: 'Morcego', color: '#6a4a9a', hp: 128, speed: 215, r: 14, look: ['claws', 'ears', '#d0a8ff'], a: { t: 'proj', cd: .55, dmg: 9.8, speed: 620, r: 4, steal: .3, ps: 'orb' }, s: { t: 'blink', name: 'Voo errático', cd: 5, dist: 230, rad: 70, dmg: 13 }, d: ['Ultrassons que roubam vida.', 'Voo errático: salta e fere quem estiver à chegada.'], en: { n: 'Bat', sn: 'Erratic flight', d: ['Ultrasonic shrieks that steal life.', 'Erratic flight: jumps and hurts anyone at the landing.'] } },
+  { id: 'shark', cat: 'natureza', name: 'Tubarão', color: '#4a7aa8', hp: 213, speed: 185, r: 19, look: ['claws', 'horn', '#d0e8ff'], a: { t: 'melee', cd: 0.5, dmg: 20.2, range: 66, arc: 1.2, kb: 150 }, s: { t: 'dash', name: 'Mordida frenética', cd: 6, dmg: 29.1, time: .25, speed: 780 }, d: ['Dentadas rápidas e profundas.', 'Mordida frenética: lança-se ao inimigo a grande velocidade.'], en: { n: 'Shark', sn: 'Feeding frenzy', d: ['Quick, deep bites.', 'Feeding frenzy: lunges at the enemy at high speed.'] } },
+  { id: 'octopus', cat: 'natureza', name: 'Polvo', color: '#c04a8a', hp: 134, speed: 170, r: 18, look: ['vine', 'horn', '#ffc0e0'], a: { t: 'spread', n: 4, sp: .18, cd: .9, dmg: 5.9, speed: 560, r: 4, life: .8, ps: 'orb' }, s: { t: 'ring', name: 'Nuvem de tinta', cd: 8, dmg: 6.2, n: 12, speed: 420, r: 5, life: .9, slow: 1, ps: 'orb' }, d: ['Jatos de tinta em leque.', 'Nuvem de tinta: círculo de tinta que abranda.'], en: { n: 'Octopus', sn: 'Ink cloud', d: ['Fan of ink jets.', 'Ink cloud: a ring of slowing ink.'] } },
+  { id: 'turtle', cat: 'natureza', name: 'Tartaruga', color: '#4a9a5a', hp: 390, speed: 120, r: 22, look: ['fists', 'horn', '#b8e8a0'], a: { t: 'melee', cd: 1, dmg: 35.2, range: 66, arc: 1.3, kb: 260 }, s: { t: 'shield', name: 'Carapaça', cd: 8, dur: 2.5 }, d: ['Cabeçadas lentas e pesadas.', 'Carapaça: esconde-se e corta quase todo o dano.'], en: { n: 'Turtle', sn: 'Shell', d: ['Slow, heavy headbutts.', 'Shell: hides away and cuts almost all damage.'] } },
+  { id: 'chameleon', cat: 'natureza', name: 'Camaleão', color: '#7ac84a', hp: 150, speed: 185, r: 15, look: ['vine', 'horn', '#e8ff90'], a: { t: 'proj', cd: .75, dmg: 13, speed: 700, r: 4, pierce: 1, ps: 'dia' }, s: { t: 'inv', name: 'Camuflagem', cd: 9, dur: .5, buff: 'ghost', bdur: 3 }, d: ['Língua veloz que atravessa o alvo.', 'Camuflagem: fica quase invisível durante 3s.'], en: { n: 'Chameleon', sn: 'Camouflage', d: ['A swift tongue that pierces the target.', 'Camouflage: nearly invisible for 3s.'] } },
+  { id: 'penguin', cat: 'natureza', name: 'Pinguim', color: '#3a5a8a', hp: 182, speed: 170, r: 17, look: ['fists', 'horn', '#a0e0ff'], a: { t: 'proj', cd: .8, dmg: 9.9, speed: 480, r: 6, slow: 1, ps: 'orb' }, s: { t: 'dash', name: 'Deslize no gelo', cd: 5, dmg: 16, time: .3, speed: 700, inv: .3 }, d: ['Bolas de neve que abrandam.', 'Deslize no gelo: desliza invulnerável e fere ao passar.'], en: { n: 'Penguin', sn: 'Ice slide', d: ['Snowballs that slow.', 'Ice slide: slides invulnerably and hurts on the way.'] } },
+  { id: 'kangaroo', cat: 'natureza', name: 'Canguru', color: '#c08a5a', hp: 360, speed: 200, r: 18, look: ['fists', 'ears', '#ffe0b8'], a: { t: 'melee', cd: 0.38, dmg: 28, range: 58, arc: 1.4, kb: 150 }, s: { t: 'blink', name: 'Salto gigante', cd: 5, dist: 240, rad: 85, dmg: 27 }, d: ['Socos rápidos de boxeador.', 'Salto gigante: salta por cima e cai com dano em área.'], en: { n: 'Kangaroo', sn: 'Giant leap', d: ['Quick boxer punches.', 'Giant leap: jumps over and lands with area damage.'] } },
+  { id: 'dolphin', cat: 'natureza', name: 'Golfinho', color: '#4ab0d8', hp: 162, speed: 215, r: 16, look: ['feather', 'horn', '#c8f0ff'], a: { t: 'proj', cd: .5, dmg: 9.4, speed: 700, r: 4, ps: 'orb' }, s: { t: 'back', name: 'Salto elegante', cd: 4, speed: 640, time: .22, inv: .22 }, d: ['Disparos rápidos de água.', 'Salto elegante: recua depressa e fica invulnerável.'], en: { n: 'Dolphin', sn: 'Graceful leap', d: ['Quick water shots.', 'Graceful leap: retreats fast and stays invulnerable.'] } },
+  { id: 'peacock', cat: 'natureza', name: 'Pavão', color: '#2a9a8a', hp: 163, speed: 170, r: 16, look: ['feather', 'crest', '#7af0d0'], a: { t: 'ring', n: 8, cd: 1, dmg: 12.9, speed: 460, r: 4, life: .8, ps: 'orb' }, s: { t: 'volley', name: 'Leque de penas', cd: 7, dmg: 11.5, n: 7, sp: .17, speed: 580, r: 5, ps: 'dia' }, d: ['Penas em círculo à sua volta.', 'Leque de penas: 7 penas em leque largo.'], en: { n: 'Peacock', sn: 'Feather fan', d: ['A ring of feathers around it.', 'Feather fan: 7 feathers in a wide fan.'] } },
+  { id: 'cobra', cat: 'natureza', name: 'Cobra', color: '#8a9a2a', hp: 118, speed: 185, r: 16, look: ['claws', 'horn', '#e8f070'], a: { t: 'proj', cd: .65, dmg: 7, speed: 540, r: 5, pois: 1, ps: 'orb' }, s: { t: 'bolt', name: 'Cuspe cegante', cd: 8, dmg: 11.5, speed: 620, r: 9, root: 1.2, pois: 1, ps: 'orb' }, d: ['Cuspe venenoso certeiro.', 'Cuspe cegante: paralisa o alvo por instantes.'], en: { n: 'Cobra', sn: 'Blinding spit', d: ['An accurate venom spit.', 'Blinding spit: freezes the target for a moment.'] } },
+  { id: 'ant', cat: 'natureza', name: 'Formiga', color: '#8a3a2a', hp: 171, speed: 190, r: 13, look: ['claws', 'horn', '#ff9a7a'], a: { t: 'melee', cd: 0.35, dmg: 13.6, range: 56, arc: 1.3, kb: 90 }, s: { t: 'pups', name: 'Exército de formigas', cd: 18, dmg: 0 }, d: ['Mordidas rápidas.', 'Exército de formigas: chama um enxame que ataca o inimigo.'], en: { n: 'Ant', sn: 'Ant army', d: ['Quick bites.', 'Ant army: calls a swarm that attacks the enemy.'] } },
+  { id: 'bison', cat: 'natureza', name: 'Bisonte', color: '#7a5a3a', hp: 291, speed: 155, r: 22, look: ['claws', 'horn', '#d8b890'], a: { t: 'melee', cd: 0.9, dmg: 28.4, range: 70, arc: 1.3, kb: 380 }, s: { t: 'nova', name: 'Estouro da manada', cd: 8, dmg: 28.6, rad: 115, kb: 380, stun: .6, col: '#b8946a' }, d: ['Marradas fortes.', 'Estouro da manada: onda de choque que empurra e atordoa.'], en: { n: 'Bison', sn: 'Stampede', d: ['Strong headbutts.', 'Stampede: a shockwave that pushes and stuns.'] } },
+  { id: 'crab', cat: 'natureza', name: 'Caranguejo', color: '#d8503a', hp: 298, speed: 160, r: 17, look: ['claws', 'horn', '#ffb098'], a: { t: 'melee', cd: 0.55, dmg: 27.5, range: 64, arc: 1.5, kb: 170 }, s: { t: 'reflect', name: 'Pinças de aço', cd: 8, dur: 1.3 }, d: ['Tenazes que cortam fundo.', 'Pinças de aço: reflete os projéteis durante 1,3s.'], en: { n: 'Crab', sn: 'Steel pincers', d: ['Pincers that cut deep.', 'Steel pincers: reflects projectiles for 1.3s.'] } },
+  { id: 'jellyfish', cat: 'natureza', name: 'Alforreca', color: '#c878e8', hp: 141, speed: 150, r: 17, look: ['vine', 'horn', '#f0c8ff'], a: { t: 'proj', cd: .9, dmg: 10.6, speed: 380, r: 7, slow: 1, pois: 1, life: 1.4, ps: 'orb' }, s: { t: 'nova', name: 'Choque elétrico', cd: 7, dmg: 16.5, rad: 105, stun: .7, kb: 120, col: '#d8a8ff' }, d: ['Tentáculos venenosos que abrandam.', 'Choque elétrico: descarga em redor que atordoa.'], en: { n: 'Jellyfish', sn: 'Electric shock', d: ['Venomous tentacles that slow.', 'Electric shock: a discharge around it that stuns.'] } },
+  { id: 'polarbear', cat: 'natureza', name: 'Urso Polar', color: '#c8dcf0', hp: 306, speed: 150, r: 23, look: ['claws', 'ears', '#ffffff'], a: { t: 'melee', cd: 0.85, dmg: 30, range: 72, arc: 1.4, kb: 330 }, s: { t: 'nova', name: 'Rugido gelado', cd: 8, dmg: 22.5, rad: 115, kb: 300, slow: 1, col: '#c8e8ff' }, d: ['Patada enorme que esmaga.', 'Rugido gelado: onda de frio que empurra.'], en: { n: 'Polar Bear', sn: 'Frozen roar', d: ['A huge paw swipe that crushes.', 'Frozen roar: a wave of cold that pushes back.'] } },
+  { id: 'vulture', cat: 'natureza', name: 'Abutre', color: '#7a6a5a', hp: 132, speed: 190, r: 16, look: ['feather', 'horn', '#d8c8b0'], a: { t: 'proj', cd: .7, dmg: 11, speed: 560, r: 5, steal: .25, ps: 'dia' }, s: { t: 'curse', name: 'Presságio', cd: 9, dur: 6, range: 520 }, d: ['Bicadas que roubam vida.', 'Presságio: amaldiçoa a presa durante 6s.'], en: { n: 'Vulture', sn: 'Omen', d: ['Pecks that steal life.', 'Omen: curses the prey for 6s.'] } },
+  { id: 'hyena', cat: 'natureza', name: 'Hiena', color: '#9a8a3a', hp: 292, speed: 200, r: 16, look: ['claws', 'ears', '#e8dc90'], a: { t: 'melee', cd: 0.4, dmg: 25.5, range: 58, arc: 1.4, kb: 100 }, s: { t: 'buff', name: 'Gargalhada', cd: 9, buff: 'fury', dur: 4 }, d: ['Dentadas rápidas em matilha.', 'Gargalhada: +50% de dano durante 4s.'], en: { n: 'Hyena', sn: 'Cackle', d: ['Quick pack bites.', 'Cackle: +50% damage for 4s.'] } },
+  { id: 'panda', cat: 'natureza', name: 'Panda', color: '#d8d8d8', hp: 248, speed: 150, r: 22, look: ['fists', 'ears', '#404040'], a: { t: 'melee', cd: 0.7, dmg: 22, range: 66, arc: 1.4, kb: 240 }, s: { t: 'heal', name: 'Bambu fresco', cd: 10, dur: 3 }, d: ['Patadas desajeitadas mas fortes.', 'Bambu fresco: recupera 35% da vida em 3 segundos.'], en: { n: 'Panda', sn: 'Fresh bamboo', d: ['Clumsy but strong swats.', 'Fresh bamboo: heals 35% of health over 3 seconds.'] } },
 ];
 const GEN_IDS = GEN.map(g => g.id);
 const ALL = ['warrior', 'mage', 'archer', 'ninja', 'paladin', 'druid', 'bomber', 'pyro', 'cryo', 'electro', 'necro', 'illusion', 'shadow', 'arcane', 'wind', 'geo', 'chrono', 'spear', 'berserk', 'duelist', 'crossbow', 'sniper', 'gunslinger', 'legion', 'chain', 'knives', 'samurai', 'wolf', 'bear', 'snake', 'spider', 'treant', 'hawk', 'beekeeper', 'shaman', 'boar', 'nymph', 'reaper', 'vampire', 'cleric', 'angel', 'demon', 'witch', 'monk', 'templar', 'ghost', 'darkknight', ...GEN_IDS];
@@ -691,7 +719,7 @@ try {
     if (ALL.includes(o.selected)) save.selected = o.selected;
     for (const k of ALL) if (Number.isFinite(o.pts?.[k])) save.pts[k] = clamp(Math.round(o.pts[k]), 0, 2);
     if (Array.isArray(o.unlocked)) save.unlocked = o.unlocked.filter(k => ALL.includes(k));
-    if (o.mode >= 2 && o.mode <= 7) save.mode = o.mode;
+    if (o.mode >= 2 && o.mode <= 8) save.mode = o.mode;
     if (o.skins && typeof o.skins === 'object') for (const k of ALL) { const z = o.skins[k]; if (z && Array.isArray(z.own)) { const own = z.own.filter(id => SKIN_IDS.includes(id)); save.skins[k] = { own, sel: own.includes(z.sel) ? z.sel : '' }; } }
     if (o.p2 === 'random' || ALL.includes(o.p2)) save.p2 = o.p2;
     if (o.tower && typeof o.tower === 'object') { if (Number.isFinite(o.tower.best)) save.tower.best = clamp(Math.round(o.tower.best), 0, 999); if (Number.isFinite(o.tower.runs)) save.tower.runs = clamp(Math.round(o.tower.runs), 0, 99999); }
@@ -1172,8 +1200,8 @@ function resetRound() {
 function startMatch(diff) {
   G.tn = null; G.sim = false;
   if (save.mode === 7) { startTournament(diff); return; }
-  if (save.mode === 6) diff = 'normal'; G.local = save.mode === 5 ? 'coop' : save.mode === 6 ? 'duel' : null; G.p2 = null; wantSp2 = false;
-  G.potUsed = 0; G.rndArena = save.arena === 'random'; G.diff = diff; G.mode = save.mode === 2 || save.mode === 5 ? 2 : save.mode === 3 ? 3 : 1; G.tw = [0, 0, 0, 0]; G.tower = save.mode === 4 ? { floor: 1, lives: 3, hp: 0, heal: 0, picks: [], keep: 0 } : null; if (G.tower) diff = G.diff = 'easy'; const D = DIFF[diff], BL = diff === 'normal' || G.local ? save.levels[save.selected] : D.botLvl;
+  if (save.mode === 6 || save.mode === 8) diff = 'normal'; G.local = save.mode === 5 ? 'coop' : save.mode === 6 ? 'duel' : save.mode === 8 ? 'quad' : null; G.p2 = null; wantSp2 = false;
+  G.potUsed = 0; G.rndArena = save.arena === 'random'; G.diff = diff; G.mode = save.mode === 2 || save.mode === 5 || save.mode === 8 ? 2 : save.mode === 3 ? 3 : 1; G.tw = [0, 0, 0, 0]; G.tower = save.mode === 4 ? { floor: 1, lives: 3, hp: 0, heal: 0, picks: [], keep: 0 } : null; if (G.tower) diff = G.diff = 'easy'; const D = DIFF[diff], BL = diff === 'normal' || G.local ? save.levels[save.selected] : D.botLvl;
   { const ks = Object.keys(ARENAS); setArena(save.arena === 'random' ? ks[Math.floor(Math.random() * ks.length)] : save.arena); }
   const others = CKEYS.filter(k => k !== save.selected);
   for (let i = others.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [others[i], others[j]] = [others[j], others[i]]; }
@@ -1195,7 +1223,8 @@ function startMatch(diff) {
   }
   { const a0 = save.armor[save.selected] | 0, w0 = save.weapon[save.selected] | 0; const s0 = save.stars[save.selected] | 0; applyGear(G.player, a0, w0, s0);
     const [ba, bw, bs] = botTiers(diff, a0, w0, s0); for (const f of G.fs) if (f !== G.player) applyGear(f, ba, bw, bs); }
-  if (G.local) { for (const f of G.fs) applyGear(f, 0, 0, 0); G.p2 = G.local === 'coop' ? G.ally : G.bot; G.p2.D = DIFF.normal; }
+  if (G.local) { for (const f of G.fs) applyGear(f, 0, 0, 0); G.p2 = G.local === 'coop' || G.local === 'quad' ? G.ally : G.bot; G.p2.D = DIFF.normal; }
+  for (const f of G.fs) f.seat = -1; G.player.seat = 0; if (G.local === 'quad') { G.ally.seat = 1; G.bot.seat = 2; G.bot2.seat = 3; } else if (G.p2) G.p2.seat = 1;
   if (G.tower) { G.rndArena = save.arena === 'random'; towerSpawn(); }
   G.player.skin = (save.skins[save.selected] || {}).sel || '';
   G.round = 1; showScreen(null); resetRound(); setPlayUI(true);
@@ -1244,6 +1273,7 @@ function tnTick(f) {
   const mx = j1 ? (K['d'] ? 1 : 0) - (K['a'] ? 1 : 0) : (K['arrowright'] ? 1 : 0) - (K['arrowleft'] ? 1 : 0), my = j1 ? (K['s'] ? 1 : 0) - (K['w'] ? 1 : 0) : (K['arrowdown'] ? 1 : 0) - (K['arrowup'] ? 1 : 0);
   f.mx = mx; f.my = my; const sp = j1 ? wantSp : wantSp2; if (j1) wantSp = false; else wantSp2 = false;
   if (j1 ? (K['j'] || mouseDown) : K['enter']) doAttack(f);
+  padAdd(f, j1 ? 0 : 1);
   if (sp) doSpecial(f, (mx || my) ? Math.atan2(my, mx) : f.aim);
 }
 /* ---------- TORRE ---------- */
@@ -1328,6 +1358,87 @@ addEventListener('pointerdown', () => { if (G.state === 'replay') endReplay(); }
 cv.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; audio(); mouseDown = true; });
 addEventListener('pointerup', e => { if (e.pointerType === 'mouse') mouseDown = false; });
 cv.addEventListener('contextmenu', e => { e.preventDefault(); });
+
+/* ---------- COMANDOS (Gamepad API) ---------- */
+const Lx = (a, b) => LANG === 'pt' ? a : b;
+const PAD = { s: [], src: 'kb', foc: null, dir: '', rep: 0, ui: 0 };
+const padDz = (x, y) => { const m = Math.hypot(x, y); if (m < .28) return [0, 0]; const k = Math.min(1, (m - .28) / .72) / m; return [x * k, y * k]; };
+const padName = g => { const id = g.id || ''; if (/054c|sony|dualshock|dualsense|wireless controller/i.test(id)) return 'PlayStation'; if (/xbox|045e/i.test(id)) return 'Xbox'; const n = id.replace(/\s*\(.*$/, '').trim(); return n || 'Gamepad'; };
+function padEdge(s, ...ks) { let r = false; for (const k of ks) if (s.e[k]) { r = true; delete s.e[k]; } return r; }
+function padPoll(dt) {
+  let gps = []; try { gps = navigator.getGamepads ? Array.from(navigator.getGamepads()) : []; } catch (e) { }
+  const conn = gps.filter(g => g && g.connected).sort((a, b) => a.index - b.index).slice(0, 4), old = PAD.s, now = performance.now();
+  PAD.s = conn.map((g, i) => {
+    const o = old[i] && old[i].id === g.id ? old[i] : null, b = Array.from(g.buttons || []).map(x => !!(x && (x.pressed || x.value > .5))), ax = g.axes || [];
+    const [lx, ly] = padDz(ax[0] || 0, ax[1] || 0), [rx, ry] = padDz(ax[2] || 0, ax[3] || 0), e = o ? o.e : {};
+    let act = o ? o.act : 0; b.forEach((v, j) => { if (v && !(o && o.b[j])) { e[j] = true; act = now; } });
+    if (Math.hypot(ax[0] || 0, ax[1] || 0) > .6 || Math.hypot(ax[2] || 0, ax[3] || 0) > .6) act = now;
+    if (act === now) PAD.src = 'pad';
+    return { id: g.id, name: padName(g), std: g.mapping === 'standard', b, lx, ly, rx, ry, e, act, raw: [ax[0] || 0, ax[1] || 0] };
+  });
+  if (PAD.s.length !== old.length) PAD.ui = 0;
+  if (G.state === 'replay') { for (const s of PAD.s) if (Object.keys(s.e).length) { endReplay(); break; } }
+  for (const s of PAD.s) if (padEdge(s, 9) && (isPlaying() || G.state === 'paused')) { audio(); togglePause(); }
+  padMenu(dt);
+  if (G.state !== 'fight') for (const s of PAD.s) s.e = {};
+  if (curScreen === 's-set' && (PAD.ui -= dt) <= 0) { PAD.ui = .2; renderPads(); }
+}
+function renderPads() {
+  const el = $('padList'); if (!el) return; const now = performance.now(); let h = '';
+  for (let i = 0; i < 4; i++) {
+    const s = PAD.s[i];
+    h += s ? `<div class="padslot on${now - s.act < 400 ? ' act' : ''}"><b>${i + 1}</b><span>${s.name}${s.std ? '' : Lx(' (mapeamento não-standard)', ' (non-standard mapping)')}</span><i>${Lx('● ligado', '● connected')}</i></div>`
+      : `<div class="padslot"><b>${i + 1}</b><span style="color:var(--mute)">${Lx('— livre (carrega num botão no comando)', '— free (press a button on the controller)')}</span></div>`;
+  }
+  if (el.dataset.h !== h) { el.dataset.h = h; el.innerHTML = h; }
+}
+function padAdd(f, seat) {
+  const s = PAD.s[seat]; if (!s) return false;
+  let mx = s.lx, my = s.ly;
+  if (G.local) { mx += (s.b[15] ? 1 : 0) - (s.b[14] ? 1 : 0); my += (s.b[13] ? 1 : 0) - (s.b[12] ? 1 : 0); }
+  f.mx += mx; f.my += my;
+  if (s.rx || s.ry) { f.aim = Math.atan2(s.ry, s.rx); f.aimDist = 300; }
+  if (s.b[7] || s.b[5] || s.b[0] || s.b[2]) doAttack(f);
+  if (padEdge(s, 6, 4, 1, 3)) doSpecial(f, (f.mx || f.my) ? Math.atan2(f.my, f.mx) : f.aim);
+  if (seat === 0 && !G.local && !G.autoplay) for (let i = 0; i < 4; i++) if (padEdge(s, 12 + i)) drinkIdx(i);
+  return true;
+}
+function padOnlyInput(f, seat) {
+  const e = opp(f); if (e) { f.aim = Math.atan2(e.y - f.y, e.x - f.x); f.aimDist = Math.hypot(e.x - f.x, e.y - f.y); }
+  f.mx = f.my = 0; padAdd(f, seat);
+}
+function padMenu(dt) {
+  const scr = curScreen && $(curScreen), clr = () => { if (PAD.foc) PAD.foc.classList.remove('padf'); PAD.shown = false; }, wasShown = PAD.shown;
+  if (!scr || scr.classList.contains('hidden') || !PAD.s.length || G.state === 'replay') { clr(); PAD.foc = null; return; }
+  if (PAD.src !== 'pad') { clr(); return; }
+  const cand = [...scr.querySelectorAll('button, .card, input, [data-diff]')].filter(el => { if (el.disabled || el.type === 'hidden') return false; const r = el.getBoundingClientRect(); return r.width > 4 && r.height > 4 && getComputedStyle(el).visibility !== 'hidden'; });
+  if (!cand.length) return;
+  if (!PAD.foc || !cand.includes(PAD.foc)) { clr(); PAD.foc = cand[0]; }
+  PAD.foc.classList.add('padf'); PAD.shown = true;
+  let dir = '', press = false, back = false;
+  for (const s of PAD.s) { if (padEdge(s, 0)) press = true; if (padEdge(s, 1)) back = true; }
+  // d-pad: 12 = cima, 13 = baixo, 14 = esquerda, 15 = direita
+  for (const s of PAD.s) { if (s.b[12] || s.raw[1] < -.6) dir = 'u'; else if (s.b[13] || s.raw[1] > .6) dir = 'd'; else if (s.b[14] || s.raw[0] < -.6) dir = 'l'; else if (s.b[15] || s.raw[0] > .6) dir = 'r'; if (dir) break; }
+  if (!wasShown) return;
+  if (press) { audio(); SFX.click(); PAD.foc.click(); return; }
+  if (back) { audio(); escBack(); return; }
+  if (!dir) { PAD.dir = ''; PAD.rep = 0; return; }
+  if (dir === PAD.dir) { PAD.rep -= dt; if (PAD.rep > 0) return; PAD.rep = .12; } else { PAD.dir = dir; PAD.rep = .35; }
+  const f = PAD.foc;
+  if (f.type === 'range' && (dir === 'l' || dir === 'r')) { f.value = Math.max(0, Math.min(100, +f.value + (dir === 'r' ? 5 : -5))); f.dispatchEvent(new Event('input', { bubbles: true })); f.dispatchEvent(new Event('change', { bubbles: true })); return; }
+  const r0 = f.getBoundingClientRect(), cx = r0.left + r0.width / 2, cy = r0.top + r0.height / 2; let best = null, bs = 1e9;
+  for (const el of cand) {
+    if (el === f) continue; const r = el.getBoundingClientRect(), dx = r.left + r.width / 2 - cx, dy = r.top + r.height / 2 - cy;
+    const pr = dir === 'u' ? -dy : dir === 'd' ? dy : dir === 'l' ? -dx : dx, pp = (dir === 'u' || dir === 'd') ? Math.abs(dx) : Math.abs(dy);
+    if (pr < 4) continue; const sc = pr + pp * 2.2; if (sc < bs) { bs = sc; best = el; }
+  }
+  if (best) { f.classList.remove('padf'); PAD.foc = best; best.classList.add('padf'); SFX.click(); best.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+}
+addEventListener('gamepadconnected', e => { const i = [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(g => g && g.connected).sort((a, b) => a.index - b.index).findIndex(g => g.index === e.gamepad.index); toast(Lx('🎮 Comando ligado: ', '🎮 Controller connected: ') + padName(e.gamepad) + (i >= 0 && i < 4 ? ' (' + (i + 1) + ')' : '')); });
+addEventListener('gamepaddisconnected', () => { toast(Lx('🎮 Comando desligado', '🎮 Controller disconnected')); if (isPlaying()) pauseGame(); });
+addEventListener('mousemove', () => { if (PAD.src === 'pad') { PAD.src = 'kb'; } });
+addEventListener('keydown', () => { PAD.src = 'kb'; }, true);
+
 cv.addEventListener('mousedown', e => { if (e.button === 2) wantSp = true; });
 
 // touch
@@ -1525,7 +1636,7 @@ document.querySelectorAll('[data-diff]').forEach(b => b.addEventListener('click'
 
 const DTXT = { easy: ['Bot lento e distraído', 'Bots lentos e distraídos'], normal: ['Bot esquiva e usa habilidades', 'Bots esquivam e usam habilidades'], hard: ['Bot rápido, prevê os teus movimentos', 'Bots rápidos, prevêem os teus movimentos'] };
 function renderP2Row() {
-  const r = $('p2Row'); r.innerHTML = ''; const on = save.mode >= 5 && save.mode <= 7; r.style.display = on ? '' : 'none'; if (!on) return;
+  const r = $('p2Row'); r.innerHTML = ''; const on = save.mode >= 5 && save.mode <= 8; r.style.display = on ? '' : 'none'; if (!on) return;
   if (save.p2 !== 'random' && !(CKEYS.includes(save.p2) && isUnlocked(save.p2))) save.p2 = 'random';
   const l = ['random', ...CKEYS.filter(isUnlocked)], i = Math.max(0, l.indexOf(save.p2));
   const mk = (t, d) => { const b = document.createElement('button'); b.className = 'btn small'; b.textContent = t; b.addEventListener('click', () => { audio(); SFX.click(); save.p2 = l[(i + d + l.length) % l.length]; persist(); renderModeRow(); }); return b; };
@@ -1534,14 +1645,15 @@ function renderP2Row() {
 }
 function renderModeRow() {
   const row = $('modeRow'); row.innerHTML = ''; renderP2Row();
-  for (const [m, label] of [[1, '⚔ 1 vs 1'], [2, '👥 2 vs 2 (tu + bot aleatório)'], [3, '☠ Batalha solitária (1 vs 3)'], [4, '🗼 Torre'], [5, '🎮 Co-op local (J1 + J2 vs 2 bots)'], [6, '🥊 Duelo local (J1 vs J2)'], [7, '🏆 Torneio local (4)']]) {
+  for (const [m, label] of [[1, '⚔ 1 vs 1'], [2, '👥 2 vs 2 (tu + bot aleatório)'], [3, '☠ Batalha solitária (1 vs 3)'], [4, '🗼 Torre'], [5, '🎮 Co-op local (J1 + J2 vs 2 bots)'], [6, '🥊 Duelo local (J1 vs J2)'], [7, '🏆 Torneio local (4)'], [8, '🎮 2 vs 2 só jogadores (4 jogadores)']]) {
     const b = document.createElement('button'); b.className = 'btn small' + (save.mode === m ? ' sel' : ''); b.textContent = label;
     b.addEventListener('click', () => { audio(); SFX.click(); save.mode = m; persist(); renderModeRow(); });
     row.appendChild(b);
   }
-  for (const k of Object.keys(DIFF)) document.querySelector(`[data-diff=${k}]`).style.display = (save.mode === 4 || save.mode === 6) && k !== 'normal' ? 'none' : '';
+  for (const k of Object.keys(DIFF)) document.querySelector(`[data-diff=${k}]`).style.display = (save.mode === 4 || save.mode === 6 || save.mode === 8) && k !== 'normal' ? 'none' : '';
   if (save.mode === 4) { document.querySelector('[data-diff=normal] .diffbtn').firstChild.textContent = 'Subir a Torre'; document.querySelector('[data-diff=normal] small').textContent = `3 vidas · sem loja · recorde: andar ${save.tower.best} · 🪙 por andar`; return; }
   if (save.mode === 6) { document.querySelector('[data-diff=normal] .diffbtn').firstChild.textContent = 'Começar duelo'; document.querySelector('[data-diff=normal] small').textContent = 'J1: WASD, J e Espaço · J2: setas, Enter e Shift · mira automática'; return; }
+  if (save.mode === 8) { document.querySelector('[data-diff=normal] .diffbtn').firstChild.textContent = Lx('Começar 2 vs 2', 'Start 2 vs 2'); document.querySelector('[data-diff=normal] small').textContent = Lx(`J1: WASD ou comando 1 · J2: setas ou comando 2 · J3 e J4: comandos 3 e 4 (sem comando = bot) · 🎮 ${PAD.s.length} ligado(s)`, `P1: WASD or controller 1 · P2: arrows or controller 2 · P3 & P4: controllers 3 & 4 (none = bot) · 🎮 ${PAD.s.length} connected`); return; }
   document.querySelector('[data-diff=normal] .diffbtn').firstChild.textContent = 'Normal';
   for (const k of Object.keys(DIFF)) { const D = DIFF[k], two = save.mode >= 2; document.querySelector(`[data-diff=${k}] small`).textContent = `${DTXT[k][two ? 1 : 0]} · +${D.gain}/3 de nível · +${D.coins * (save.mode >= 2 ? 2 : 1)} 🪙`; }
   if (save.mode === 5 || save.mode === 7) for (const k of Object.keys(DIFF)) document.querySelector(`[data-diff=${k}] small`).textContent = DTXT[k][1] + ' · modo local, sem moedas nem níveis';
@@ -1648,7 +1760,7 @@ function renderShop() {
   }
 }
 // settings
-function syncSettings() { $('setVol').value = Math.round(save.settings.volume * 100); $('setMus').checked = save.settings.music; $('setEv').checked = save.settings.events; $('setRp').checked = save.settings.replay !== false; $('setSfx').checked = save.settings.sfx; $('setTouch').checked = save.settings.touch; $('langPt').classList.toggle('sel', LANG === 'pt'); $('langEn').classList.toggle('sel', LANG === 'en'); }
+function syncSettings() { $('setVol').value = Math.round(save.settings.volume * 100); $('setMus').checked = save.settings.music; $('setEv').checked = save.settings.events; $('setRp').checked = save.settings.replay !== false; $('setSfx').checked = save.settings.sfx; $('setTouch').checked = save.settings.touch; $('langPt').classList.toggle('sel', LANG === 'pt'); $('langEn').classList.toggle('sel', LANG === 'en'); renderPads(); }
 $('setVol').addEventListener('input', e => { save.settings.volume = e.target.value / 100; persist(); });
 $('setVol').addEventListener('change', () => { audio(); SFX.hit(); });
 $('setEv').addEventListener('change', e => { save.settings.events = e.target.checked; persist(); });
@@ -1981,7 +2093,7 @@ function evStep(dt) {
 function evSteer() {
   const E = G.ev; if (!E) return;
   for (const f of G.fs) {
-    if (f.hp <= 0 || (f === G.player && !G.autoplay && !G.tn) || f === G.p2 || f.who) continue;
+    if (f.hp <= 0 || (f === G.player && !G.autoplay && !G.tn) || f === G.p2 || f.who || (G.local === 'quad' && f.seat > 1 && PAD.s[f.seat])) continue;
     let tx = null, ty = null, away = false;
     for (const m of E.meteors) if (m.t < 1.3 && Math.hypot(f.x - m.x, f.y - m.y) < m.r + f.r + 14) { tx = m.x; ty = m.y; away = true; break; }
     if (tx === null && G.fightT >= EV_ZONE0 && Math.hypot(f.x - ARC.x, f.y - ARC.y) > zoneR() - 35) { tx = ARC.x; ty = ARC.y; }
@@ -2088,9 +2200,9 @@ function endRound(team) {
 function endLocal() {
   if (G.tn) { tnMatchEnd(); return; }
   G.state = 'matchEnd'; G.spec = false; setPlayUI(false); $('pauseBtn').classList.remove('on');
-  const duel = G.local === 'duel', w1 = G.tw[0] >= 2, c1 = CLASSES[save.selected].name, c2 = CLASSES[G.p2.cls].name;
-  $('resTitle').textContent = duel ? (w1 ? 'J1 VENCE!' : 'J2 VENCE!') : (w1 ? 'VITÓRIA DA EQUIPA!' : 'DERROTA'); $('resTitle').className = 'big ' + (duel || w1 ? 'win' : 'lose');
-  $('resSub').textContent = duel ? `${c1} (J1) vs ${c2} (J2) · ${G.tw[0]}–${G.tw[1]} · ${ARENA.name}` : `${c1} (J1) + ${c2} (J2) vs ${CLASSES[G.botCls].name} + ${CLASSES[G.botCls2].name} · ${DIFF[G.diff].label} · ${G.tw[0]}–${G.tw[1]}`;
+  const duel = G.local === 'duel', quad = G.local === 'quad', w1 = G.tw[0] >= 2, c1 = CLASSES[save.selected].name, c2 = CLASSES[G.p2.cls].name;
+  $('resTitle').textContent = quad ? Lx(w1 ? 'EQUIPA 1 VENCE! (J1 + J2)' : 'EQUIPA 2 VENCE! (J3 + J4)', w1 ? 'TEAM 1 WINS! (P1 + P2)' : 'TEAM 2 WINS! (P3 + P4)') : duel ? (w1 ? 'J1 VENCE!' : 'J2 VENCE!') : (w1 ? 'VITÓRIA DA EQUIPA!' : 'DERROTA'); $('resTitle').className = 'big ' + (duel || quad || w1 ? 'win' : 'lose');
+  $('resSub').textContent = quad ? `${c1} (${Lx('J1','P1')}) + ${c2} (${Lx('J2','P2')}) vs ${CLASSES[G.bot.cls].name} (${Lx('J3','P3')}) + ${CLASSES[G.bot2.cls].name} (${Lx('J4','P4')}) · ${G.tw[0]}–${G.tw[1]} · ${ARENA.name}` : duel ? `${c1} (J1) vs ${c2} (J2) · ${G.tw[0]}–${G.tw[1]} · ${ARENA.name}` : `${c1} (J1) + ${c2} (J2) vs ${CLASSES[G.botCls].name} + ${CLASSES[G.botCls2].name} · ${DIFF[G.diff].label} · ${G.tw[0]}–${G.tw[1]}`;
   $('resLvl').innerHTML = 'Modo local: sem moedas, níveis nem estatísticas.<br>"Jogar outra vez" sorteia outro herói para o J2.';
   showScreen('result');
 }
@@ -2310,11 +2422,12 @@ function p2Input(f) {
   const mx = (keys['arrowright'] ? 1 : 0) - (keys['arrowleft'] ? 1 : 0), my = (keys['arrowdown'] ? 1 : 0) - (keys['arrowup'] ? 1 : 0);
   f.mx = mx; f.my = my; const sp = wantSp2; wantSp2 = false;
   if (keys['enter']) doAttack(f);
+  padAdd(f, 1);
   if (sp) doSpecial(f, (mx || my) ? Math.atan2(my, mx) : f.aim);
 }
 function playerInput() {
   const p = G.player;
-  const useMouse = mouseSeen && !(touch.active || touch.atk) && G.local !== 'duel';
+  const useMouse = mouseSeen && !(touch.active || touch.atk) && G.local !== 'duel' && G.local !== 'quad' && !(PAD.src === 'pad' && PAD.s[0]);
   if (useMouse) p.aim = Math.atan2(mouse.y - p.y, mouse.x - p.x); else { const e = opp(p); p.aim = Math.atan2(e.y - p.y, e.x - p.x); }
   p.aimDist = useMouse ? Math.hypot(mouse.x - p.x, mouse.y - p.y) : (() => { const e = opp(p); return Math.hypot(e.x - p.x, e.y - p.y); })();
   // teclado relativo à mira: W = frente, S = trás, A/D = lado
@@ -2322,9 +2435,9 @@ function playerInput() {
   const str = ((keys['d'] || (!G.local && keys['arrowright'])) ? 1 : 0) - ((keys['a'] || (!G.local && keys['arrowleft'])) ? 1 : 0);
   const ca = Math.cos(p.aim), sa = Math.sin(p.aim);
   let mx = fwd * ca - str * sa, my = fwd * sa + str * ca;
-  if (G.local === 'duel') { mx = str; my = -fwd; }
+  if (G.local === 'duel' || G.local === 'quad') { mx = str; my = -fwd; }
   if (touch.active) { mx += touch.mx; my += touch.my; }
-  p.mx = mx; p.my = my;
+  p.mx = mx; p.my = my; padAdd(p, 0);
   const sp = wantSp; wantSp = false;
   if (mouseDown || keys['j'] || touch.atk) doAttack(p);
   if (sp) doSpecial(p, (mx || my) ? Math.atan2(my, mx) : p.aim);
@@ -2351,7 +2464,7 @@ function update(dt) {
     if (G.tn) { for (const f of G.fs) if (f.hp > 0) { if (f.who) tnTick(f); else aiThink(f, dt); } }
     else {
     if (G.autoplay) { if (p.hp > 0) aiThink(p, dt); } else if (p.hp > 0) playerInput();
-    for (const f of G.fs) if (f !== p && f.hp > 0) { if (f === G.p2) p2Input(f); else aiThink(f, dt); } }
+    for (const f of G.fs) if (f !== p && f.hp > 0) { if (f === G.p2) p2Input(f); else if (G.local === 'quad' && f.seat > 1 && PAD.s[f.seat]) padOnlyInput(f, f.seat); else aiThink(f, dt); } }
     for (const f of G.fs) if (f.hp <= 0) f.mx = f.my = 0;
     if (evOn()) evSteer();
     G.fightT += dt; if (evOn()) evStep(dt); if (ARENA.hole) holeStep(dt);
@@ -2709,7 +2822,7 @@ function bar(x, y, w, h, frac, col, align) {
 }
 function hud2() {
   const draw = (f, x, side) => {
-    const w = 170, dead = f.hp <= 0, tag = f === G.player ? (G.local ? 'J1' : 'TU') : f === G.p2 ? 'J2' : (f.team === 0 ? 'ALIADO' : 'BOT');
+    const w = 170, dead = f.hp <= 0, tag = f === G.player ? (G.local ? 'J1' : 'TU') : f === G.p2 ? 'J2' : G.local === 'quad' ? (f === G.bot ? 'J3' : 'J4') : (f.team === 0 ? 'ALIADO' : 'BOT');
     ctx.fillStyle = dead ? '#777' : '#fff'; ctx.font = '700 12px system-ui,sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     ctx.fillText(`${tag} · ${f.c.name} Nv ${f.lvl}`, x, 18);
     bar(x, 23, w, 16, f.hp / f.maxhp, dead ? '#555' : f.c.color, side);
@@ -2836,7 +2949,7 @@ function render() {
         if (f === G.player && f.hp > 0) { ctx.fillStyle = '#ffe08a'; ctx.beginPath(); ctx.moveTo(f.x, f.y - f.r - 30); ctx.lineTo(f.x - 7, f.y - f.r - 42); ctx.lineTo(f.x + 7, f.y - f.r - 42); ctx.closePath(); ctx.fill(); }
       }
       drawFighter(ctx, f, G.time, f.hp > 0 ? (f.buf.ghost > 0 ? .3 : f.inv > 0 ? .4 : 1) : .3);
-      if (f.hp > 0) { ctx.fillStyle = '#fff'; ctx.font = '700 11px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.globalAlpha = .85; ctx.fillText((f.boss ? '👑 ' : '') + (G.local ? (f.who ? f.who.toUpperCase() + ' ' : f === G.player && !G.tn ? 'J1 ' : f === G.p2 ? 'J2 ' : '') : '') + 'Nv' + f.lvl, f.x, f.y - f.r - 8); ctx.globalAlpha = 1; }
+      if (f.hp > 0) { ctx.fillStyle = '#fff'; ctx.font = '700 11px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.globalAlpha = .85; ctx.fillText((f.boss ? '👑 ' : '') + (G.local ? (f.who ? f.who.toUpperCase() + ' ' : f === G.player && !G.tn ? 'J1 ' : f === G.p2 ? 'J2 ' : G.local === 'quad' ? (f === G.bot ? 'J3 ' : 'J4 ') : '') : '') + 'Nv' + f.lvl, f.x, f.y - f.r - 8); ctx.globalAlpha = 1; }
     }
   }
   for (const q of G.texts) { ctx.globalAlpha = clamp(q.life / .4, 0, 1); ctx.fillStyle = q.col; ctx.font = '800 18px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.strokeText(q.txt, q.x, q.y); ctx.fillText(q.txt, q.x, q.y); }
@@ -2846,7 +2959,7 @@ function render() {
     const n = G.cd > 1.9 ? '3' : G.cd > 1.2 ? '2' : G.cd > .5 ? '1' : 'LUTA!';
     bigText(n, n === 'LUTA!' ? '#f2c14e' : '#fff', n === 'LUTA!' ? 90 : 110);
     ctx.fillStyle = '#e9ecf5'; ctx.font = '700 20px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Arena: ' + ARENA.name + (ARENA.name === 'Lava' ? ' (evita as poças!)' : ARENA.ice ? ' (o chão escorrega!)' : ARENA.sand ? ' (a areia abranda-te!)' : ARENA.hole ? ' (cuidado com o buraco!)' : ''), W / 2, H / 2 + 72);
-    if (G.local && G.state === 'countdown' && G.round === 1) { ctx.save(); ctx.fillStyle = '#ffe08aee'; ctx.font = '700 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.fillText((G.local === 'duel' || G.local === 'tourney' ? 'J1: WASD mover · J ataque · Espaço especial' : 'J1: WASD + rato (esq. ataque · dir./Espaço especial)') + '   ·   J2: setas mover · Enter ataque · Shift especial   (mira automática)', W / 2, H - 56); ctx.restore(); }
+    if (G.local && G.state === 'countdown' && G.round === 1) { ctx.save(); ctx.fillStyle = '#ffe08aee'; ctx.font = '700 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.fillText(G.local === 'quad' ? 'J1: WASD · J · Espaço (ou comando 1)  |  J2: setas · Enter · Shift (ou comando 2)  |  J3 e J4: comandos 3 e 4 (sem comando = bot)' : (G.local === 'duel' || G.local === 'tourney' ? 'J1: WASD mover · J ataque · Espaço especial' : 'J1: WASD + rato (esq. ataque · dir./Espaço especial)') + '   ·   J2: setas mover · Enter ataque · Shift especial   (mira automática)', W / 2, H - 56); ctx.restore(); }
     if (!G.local && G.state === 'countdown' && G.round === 1) { const h = heroSplit(G.player.cls), l1 = '🗡 Ataque: ' + h.atk, l2 = '✨ Especial' + (save.settings.touch ? '' : ' (Espaço / botão direito)') + ': ' + h.sp;
       ctx.save(); ctx.font = '600 14px system-ui,sans-serif'; const w = Math.min(W - 40, Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 36); ctx.fillStyle = 'rgba(10,12,22,.72)'; ctx.strokeStyle = CLASSES[G.player.cls].color; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.roundRect(W / 2 - w / 2, H - 92, w, 52, 10); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(l1, W / 2, H - 70); ctx.fillText(l2, W / 2, H - 50); ctx.restore(); }
@@ -2907,7 +3020,7 @@ function tickQuestAnim(now) {
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
-  update(dt); tickQuestAnim(now); if (G.state === 'fight' && !G.autoplay && !G.local) save.stats.time += dt;
+  padPoll(dt); update(dt); tickQuestAnim(now); if (G.state === 'fight' && !G.autoplay && !G.local) save.stats.time += dt;
   if (!$('s-char').classList.contains('hidden')) {
     const t = now / 1000;
     for (const pv of previews) { pv.c.setTransform(1, 0, 0, 1, 0, 0); pv.c.clearRect(0, 0, 160, 120); pv.c.setTransform(1.45, 0, 0, 1.45, 0, 0); drawFighter(pv.c, { skin: (save.skins[pv.k] || {}).sel, armT: save.armor[pv.k], x: 36, y: 40, r: CLASSES[pv.k].r, cls: pv.k, aim: Math.sin(t * 1.5) * .5, flash: 0, swing: pv.k === 'warrior' && Math.sin(t * 3) > .9 ? .1 : 0 }, t); }
